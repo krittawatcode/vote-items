@@ -28,23 +28,21 @@ func TestMeHandler(t *testing.T) {
 	t.Run("UserUseCase.Get returns error", func(t *testing.T) {
 		uid, _ := uuid.NewRandom()
 
-		mockUserService := new(mocks.MockUserService)
-		mockUserService.On("Get", mock.AnythingOfType("*gin.Context"), uid).Return(nil, errors.New("error"))
+		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase.On("Get", mock.AnythingOfType("*gin.Context"), uid).Return(nil, errors.New("error"))
 
 		c.Set("user", &model.User{
 			UID: uid,
 		})
 
 		h := &handler.UserHandler{
-			UserUseCase: mockUserService,
+			UserUseCase: mockUserUseCase,
 		}
 		h.Me(c)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
 		assert.JSONEq(t, `{"error":"Not found: user"}`, w.Body.String())
 	})
-
-	//TODO: add not found from user usecase
 
 	t.Run("Success", func(t *testing.T) {
 		uid, _ := uuid.NewRandom()
@@ -54,15 +52,15 @@ func TestMeHandler(t *testing.T) {
 			Email: "bob@bob.com",
 		}
 
-		mockUserService := new(mocks.MockUserService)
-		mockUserService.On("Get", mock.AnythingOfType("*gin.Context"), uid).Return(mockUserResp, nil)
+		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase.On("Get", mock.AnythingOfType("*gin.Context"), uid).Return(mockUserResp, nil)
 
 		c.Set("user", &model.User{
 			UID: uid,
 		})
 
 		h := &handler.UserHandler{
-			UserUseCase: mockUserService,
+			UserUseCase: mockUserUseCase,
 		}
 		h.Me(c)
 
