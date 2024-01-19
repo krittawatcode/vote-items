@@ -21,6 +21,7 @@ services:
       context: ./vote-items-backend
       target: builder
     image: vote-items-backend
+    env_file: .env.dev
     expose:
       - "8080"
     labels:
