@@ -9,19 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/krittawatcode/vote-items/backend/delivery/routes"
 )
 
 func main() {
 	log.Println("Starting server...")
 
-	router := gin.Default()
-
-	router.GET("/api/v1/vote-items/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
-	})
+	router := routes.SetupRouter()
 
 	srv := &http.Server{
 		Addr:    ":8080",
