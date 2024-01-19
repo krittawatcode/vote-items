@@ -24,29 +24,29 @@ func (h *UserHandler) Me(c *gin.Context) {
 }
 
 // Sign up handler
-func (h *UserHandler) SignUp(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"hello": "it's sign up",
-	})
-}
+// func (h *UserHandler) SignUp(c *gin.Context) {
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"hello": "it's sign up",
+// 	})
+// }
 
 // Sign in handler
-func (h *UserHandler) SignIn(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"hello": "it's sign in",
-	})
-}
+// func (h *UserHandler) SignIn(c *gin.Context) {
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"hello": "it's sign in",
+// 	})
+// }
 
 // Sign out handler
-func (h *UserHandler) SignOut(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"hello": "it's sign out",
-	})
-}
+// func (h *UserHandler) SignOut(c *gin.Context) {
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"hello": "it's sign out",
+// 	})
+// }
 
 // Tokens handler
-func (h *UserHandler) Tokens(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"hello": "it's tokens",
-	})
-}
+// func (h *UserHandler) Tokens(c *gin.Context) {
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"hello": "it's tokens",
+// 	})
+// }
