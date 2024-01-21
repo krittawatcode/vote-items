@@ -17,6 +17,7 @@ func SetupRouter() *gin.Engine {
 	v1 := r.Group(os.Getenv("API_URL"))
 	{
 		v1.GET("me", userHandler.Me)
+		v1.POST("signUp", userHandler.SignUp)
 	}
 
 	return r
