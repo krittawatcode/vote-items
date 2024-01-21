@@ -9,13 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/krittawatcode/vote-items/backend/delivery/routes"
+	"github.com/krittawatcode/vote-items/backend/delivery/route"
 )
 
 func main() {
 	log.Println("Starting server...")
 
-	router := routes.SetupRouter()
+	router := route.SetupRouter()
 
 	srv := &http.Server{
 		Addr:    ":8080",

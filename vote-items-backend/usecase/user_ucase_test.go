@@ -6,15 +6,16 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/krittawatcode/vote-items/backend/domain/mocks"
-	"github.com/krittawatcode/vote-items/backend/domain/model"
+	"github.com/krittawatcode/vote-items/backend/domain"
+	"github.com/krittawatcode/vote-items/backend/domain/appmock"
+
 	"github.com/krittawatcode/vote-items/backend/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestGet(t *testing.T) {
-	mockRepo := new(mocks.MockUserRepository)
+	mockRepo := new(appmock.MockUserRepository)
 	userUseCase := &usecase.UserUseCase{
 		UserRepository: mockRepo,
 	}
@@ -22,7 +23,7 @@ func TestGet(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		uid := uuid.New()
 
-		mockUserResp := &model.User{
+		mockUserResp := &domain.User{
 			UID:   uid,
 			Email: "bob@bob.com",
 		}
