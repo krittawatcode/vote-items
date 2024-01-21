@@ -1,30 +1,30 @@
-package mocks
+package appmock
 
 import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/krittawatcode/vote-items/backend/domain/model"
+	"github.com/krittawatcode/vote-items/user-service/domain"
 
 	"github.com/stretchr/testify/mock"
 )
 
-// MockUserUseCase is a mock type for model.UserUseCase
+// MockUserUseCase is a mock type for domain.UserUseCase
 type MockUserUseCase struct {
 	mock.Mock
 }
 
 // Get is mock of UserUseCase Get
-func (m *MockUserUseCase) Get(ctx context.Context, uid uuid.UUID) (*model.User, error) {
+func (m *MockUserUseCase) Get(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
 	// args that will be passed to "Return" in the tests, when function
 	// is called with a uid. Hence the name "ret"
 	ret := m.Called(ctx, uid)
 
 	// first value passed to "Return"
-	var r0 *model.User
+	var r0 *domain.User
 	if ret.Get(0) != nil {
 		// we can just return this if we know we won't be passing function to "Return"
-		r0 = ret.Get(0).(*model.User)
+		r0 = ret.Get(0).(*domain.User)
 	}
 
 	var r1 error
@@ -37,7 +37,7 @@ func (m *MockUserUseCase) Get(ctx context.Context, uid uuid.UUID) (*model.User, 
 }
 
 // Sign up is a mock of UserUseCase.SignUp
-func (m *MockUserUseCase) SignUp(ctx context.Context, u *model.User) error {
+func (m *MockUserUseCase) SignUp(ctx context.Context, u *domain.User) error {
 	ret := m.Called(ctx, u)
 
 	var r0 error

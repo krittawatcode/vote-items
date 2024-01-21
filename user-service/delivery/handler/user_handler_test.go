@@ -9,9 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/krittawatcode/vote-items/backend/domain/apperrors"
-	"github.com/krittawatcode/vote-items/backend/domain/mocks"
-	"github.com/krittawatcode/vote-items/backend/domain/model"
+	"github.com/krittawatcode/vote-items/user-service/domain"
+	"github.com/krittawatcode/vote-items/user-service/domain/appmock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -22,11 +22,11 @@ func TestUserHandler_Me(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 
 		uid, _ := uuid.NewRandom()
-		mockUser := &model.User{
+		mockUser := &domain.User{
 			UID: uid,
 		}
 
-		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
 		mockUserUseCase.On("Get", mock.Anything, uid).Return(mockUser, nil)
 
 		h := &UserHandler{
@@ -44,11 +44,11 @@ func TestUserHandler_Me(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 
 		uid, _ := uuid.NewRandom()
-		mockUser := &model.User{
+		mockUser := &domain.User{
 			UID: uid,
 		}
 
-		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
 		mockUserUseCase.On("Get", mock.Anything, uid).Return(nil, errors.New("user not found"))
 
 		h := &UserHandler{
@@ -66,7 +66,7 @@ func TestUserHandler_Me(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 
 		h := &UserHandler{
-			UserUseCase: new(mocks.MockUserUseCase),
+			UserUseCase: new(appmock.MockUserUseCase),
 		}
 
 		h.Me(c)
@@ -84,15 +84,19 @@ func TestUserHandler_SignUp(t *testing.T) {
 		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody)
 		c.Request.Header.Set("Content-Type", "application/json")
 
-		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
 		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil)
 
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockTokenUseCase.On("NewPairFromUser", mock.Anything, mock.Anything, "").Return(&domain.TokenPair{}, nil)
+
 		h := &UserHandler{
-			UserUseCase: mockUserUseCase,
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
 		}
 		h.SignUp(c)
 
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusCreated, w.Code)
 	})
 	t.Run("UserUseCase.SignUp returns error", func(t *testing.T) {
 		w := httptest.NewRecorder()
@@ -102,7 +106,7 @@ func TestUserHandler_SignUp(t *testing.T) {
 		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody)
 		c.Request.Header.Set("Content-Type", "application/json")
 
-		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
 		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(errors.New("error"))
 
 		h := &UserHandler{
@@ -112,7 +116,6 @@ func TestUserHandler_SignUp(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
-
 	t.Run("UserUseCase.SignUp returns user already exist", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -120,8 +123,8 @@ func TestUserHandler_SignUp(t *testing.T) {
 		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody)
 		c.Request.Header.Set("Content-Type", "application/json")
 
-		mockUserUseCase := new(mocks.MockUserUseCase)
-		mockUserUseCase.On("SignUp", mock.AnythingOfType("*gin.Context"), mock.Anything).Return(apperrors.NewConflict("User Already Exists", "test email"))
+		mockUserUseCase := new(appmock.MockUserUseCase)
+		mockUserUseCase.On("SignUp", mock.AnythingOfType("*gin.Context"), mock.Anything).Return(domain.NewConflict("User Already Exists", "test email"))
 
 		h := &UserHandler{
 			UserUseCase: mockUserUseCase,
@@ -140,7 +143,7 @@ func TestUserHandler_SignUp(t *testing.T) {
 		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody) // can use any path here
 		c.Request.Header.Set("Content-Type", "application/json")
 
-		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
 		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil, errors.New("invalid request body"))
 
 		h := &UserHandler{
@@ -160,7 +163,7 @@ func TestUserHandler_SignUp(t *testing.T) {
 		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody) // can use any path here
 		c.Request.Header.Set("Content-Type", "application/json")
 
-		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
 		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil, errors.New("invalid request body"))
 
 		h := &UserHandler{
@@ -170,5 +173,28 @@ func TestUserHandler_SignUp(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		mockUserUseCase.AssertNotCalled(t, "SignUp")
+	})
+
+	t.Run("TokenUseCase.NewPairFromUser returns error", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		reqBody := strings.NewReader(`{"email":"bob@bob.com","password":"password123"}`)
+		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody)
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		mockUserUseCase := new(appmock.MockUserUseCase)
+		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil)
+
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockTokenUseCase.On("NewPairFromUser", mock.Anything, mock.Anything, "").Return(nil, errors.New("error"))
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+		h.SignUp(c)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 }

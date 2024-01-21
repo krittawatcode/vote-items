@@ -5,21 +5,21 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/krittawatcode/vote-items/backend/domain/apperrors"
-	"github.com/krittawatcode/vote-items/backend/domain/interface/user_interface"
-	"github.com/krittawatcode/vote-items/backend/domain/model"
+	"github.com/krittawatcode/vote-items/user-service/delivery/handler/helper"
+	"github.com/krittawatcode/vote-items/user-service/domain"
 )
 
 // Handler struct holds required services for handler to function
 type UserHandler struct {
-	UserUseCase user_interface.UserUseCase
+	UserUseCase  domain.UserUseCase
+	TokenUseCase domain.TokenUseCase
 }
 
 // Config will hold services that will eventually be injected into this
 // handler layer on handler initialization
 type UserConfig struct {
 	R           *gin.Engine
-	UserUseCase user_interface.UserUseCase
+	UserUseCase domain.UserUseCase
 }
 
 // Me handler calls services for getting
@@ -36,7 +36,7 @@ func (h *UserHandler) Me(c *gin.Context) {
 	// methods which require a valid user
 	if !exists {
 		log.Printf("Unable to extract user from request context for unknown reason: %v\n", c)
-		err := apperrors.NewInternal()
+		err := domain.NewInternal()
 		c.JSON(err.Status(), gin.H{
 			"error": err,
 		})
@@ -44,14 +44,14 @@ func (h *UserHandler) Me(c *gin.Context) {
 		return
 	}
 
-	uid := user.(*model.User).UID
+	uid := user.(*domain.User).UID
 
 	// gin.Context satisfies go's context.Context interface
 	u, err := h.UserUseCase.Get(c, uid)
 
 	if err != nil {
 		log.Printf("Unable to find user: %v\n%v", uid, err)
-		e := apperrors.NewNotFound("user", uid.String())
+		e := domain.NewNotFound("user", uid.String())
 
 		c.JSON(e.Status(), gin.H{
 			"error": e,
@@ -78,11 +78,11 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 	var req signUpReq
 
 	// Bind incoming json to struct and check for validation errors
-	if ok := bindData(c, &req); !ok {
+	if ok := helper.BindData(c, &req); !ok {
 		return
 	}
 
-	u := &model.User{
+	u := &domain.User{
 		Email:    req.Email,
 		Password: req.Password,
 	}
@@ -91,11 +91,31 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 
 	if err != nil {
 		log.Printf("Failed to sign up user: %v\n", err.Error())
-		c.JSON(apperrors.Status(err), gin.H{
+		c.JSON(domain.Status(err), gin.H{
 			"error": err,
 		})
 		return
 	}
+
+	// create token pair as strings
+	tokens, err := h.TokenUseCase.NewPairFromUser(c, u, "")
+
+	if err != nil {
+		log.Printf("Failed to create tokens for user: %v\n", err.Error())
+
+		// may eventually implement rollback logic here
+		// meaning, if we fail to create tokens after creating a user,
+		// we make sure to clear/delete the created user in the database
+
+		c.JSON(domain.Status(err), gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"tokens": tokens,
+	})
 }
 
 // Sign in handler
