@@ -35,3 +35,15 @@ func (m *MockUserUseCase) Get(ctx context.Context, uid uuid.UUID) (*model.User, 
 
 	return r0, r1
 }
+
+// Sign up is a mock of UserUseCase.SignUp
+func (m *MockUserUseCase) SignUp(ctx context.Context, u *model.User) error {
+	ret := m.Called(ctx, u)
+
+	var r0 error
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(error)
+	}
+
+	return r0
+}

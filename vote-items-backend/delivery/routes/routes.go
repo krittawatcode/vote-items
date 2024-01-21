@@ -14,9 +14,10 @@ func SetupRouter() *gin.Engine {
 	userHandler := &handler.UserHandler{}
 
 	// user handler
-	v1 := r.Group(os.Getenv("ACCOUNT_API_URL"))
+	v1 := r.Group(os.Getenv("API_URL"))
 	{
 		v1.GET("me", userHandler.Me)
+		v1.POST("signUp", userHandler.SignUp)
 	}
 
 	return r

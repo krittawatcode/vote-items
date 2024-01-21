@@ -64,12 +64,39 @@ func (h *UserHandler) Me(c *gin.Context) {
 	})
 }
 
+// signUpReq is not exported, hence the lowercase name
+// it is used for validation and json marshalling
+type signUpReq struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,gte=6,lte=30"`
+}
+
 // Sign up handler
-// func (h *UserHandler) SignUp(c *gin.Context) {
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"hello": "it's sign up",
-// 	})
-// }
+func (h *UserHandler) SignUp(c *gin.Context) {
+	// define a variable to which we'll bind incoming
+	// json body, {email, password}
+	var req signUpReq
+
+	// Bind incoming json to struct and check for validation errors
+	if ok := bindData(c, &req); !ok {
+		return
+	}
+
+	u := &model.User{
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	err := h.UserUseCase.SignUp(c, u)
+
+	if err != nil {
+		log.Printf("Failed to sign up user: %v\n", err.Error())
+		c.JSON(apperrors.Status(err), gin.H{
+			"error": err,
+		})
+		return
+	}
+}
 
 // Sign in handler
 // func (h *UserHandler) SignIn(c *gin.Context) {

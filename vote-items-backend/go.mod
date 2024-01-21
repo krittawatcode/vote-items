@@ -8,6 +8,11 @@ require (
 )
 
 require (
+	golang.org/x/tools v0.6.0 // indirect
+	golang.org/x/tools/cmd/cover v0.1.0-deprecated // indirect
+)
+
+require (
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

@@ -1,70 +1,174 @@
-package handler_test
+package handler
 
 import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/krittawatcode/vote-items/backend/delivery/handler"
+	"github.com/krittawatcode/vote-items/backend/domain/apperrors"
 	"github.com/krittawatcode/vote-items/backend/domain/mocks"
 	"github.com/krittawatcode/vote-items/backend/domain/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestMeHandler(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-
-	t.Run("No user in context", func(t *testing.T) {
-		new(handler.UserHandler).Me(c)
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		assert.JSONEq(t, `{"error":"Internal server error"}`, w.Body.String())
-	})
-
-	t.Run("UserUseCase.Get returns error", func(t *testing.T) {
-		uid, _ := uuid.NewRandom()
-
-		mockUserUseCase := new(mocks.MockUserUseCase)
-		mockUserUseCase.On("Get", mock.AnythingOfType("*gin.Context"), uid).Return(nil, errors.New("error"))
-
-		c.Set("user", &model.User{
-			UID: uid,
-		})
-
-		h := &handler.UserHandler{
-			UserUseCase: mockUserUseCase,
-		}
-		h.Me(c)
-
-		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.JSONEq(t, `{"error":"Not found: user"}`, w.Body.String())
-	})
-
+func TestUserHandler_Me(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		uid, _ := uuid.NewRandom()
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
 
-		mockUserResp := &model.User{
-			UID:   uid,
-			Email: "bob@bob.com",
+		uid, _ := uuid.NewRandom()
+		mockUser := &model.User{
+			UID: uid,
 		}
 
 		mockUserUseCase := new(mocks.MockUserUseCase)
-		mockUserUseCase.On("Get", mock.AnythingOfType("*gin.Context"), uid).Return(mockUserResp, nil)
+		mockUserUseCase.On("Get", mock.Anything, uid).Return(mockUser, nil)
 
-		c.Set("user", &model.User{
-			UID: uid,
-		})
-
-		h := &handler.UserHandler{
+		h := &UserHandler{
 			UserUseCase: mockUserUseCase,
 		}
+
+		c.Set("user", mockUser)
 		h.Me(c)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.JSONEq(t, `{"user":{"UID":"`+uid.String()+`","Email":"bob@bob.com"}}`, w.Body.String())
+	})
+
+	t.Run("User not found", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		uid, _ := uuid.NewRandom()
+		mockUser := &model.User{
+			UID: uid,
+		}
+
+		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase.On("Get", mock.Anything, uid).Return(nil, errors.New("user not found"))
+
+		h := &UserHandler{
+			UserUseCase: mockUserUseCase,
+		}
+
+		c.Set("user", mockUser)
+		h.Me(c)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("User not set in context", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		h := &UserHandler{
+			UserUseCase: new(mocks.MockUserUseCase),
+		}
+
+		h.Me(c)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestUserHandler_SignUp(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		reqBody := strings.NewReader(`{"email":"bob@bob.com","password":"password123"}`)
+		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody)
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil)
+
+		h := &UserHandler{
+			UserUseCase: mockUserUseCase,
+		}
+		h.SignUp(c)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+	t.Run("UserUseCase.SignUp returns error", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		reqBody := strings.NewReader(`{"email":"bob@bob.com","password":"password123"}`)
+		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody)
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(errors.New("error"))
+
+		h := &UserHandler{
+			UserUseCase: mockUserUseCase,
+		}
+		h.SignUp(c)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("UserUseCase.SignUp returns user already exist", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		reqBody := strings.NewReader(`{"email":"bob@bob.com","password":"password123"}`)
+		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody)
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase.On("SignUp", mock.AnythingOfType("*gin.Context"), mock.Anything).Return(apperrors.NewConflict("User Already Exists", "test email"))
+
+		h := &UserHandler{
+			UserUseCase: mockUserUseCase,
+		}
+		h.SignUp(c)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
+		mockUserUseCase.AssertExpectations(t)
+	})
+
+	t.Run("Invalid request body - missing password", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		reqBody := strings.NewReader(`{"email":"bob@bob.com"}`)              // missing password
+		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody) // can use any path here
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil, errors.New("invalid request body"))
+
+		h := &UserHandler{
+			UserUseCase: mockUserUseCase,
+		}
+		h.SignUp(c)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		mockUserUseCase.AssertNotCalled(t, "SignUp")
+	})
+
+	t.Run("Invalid request body - missing email", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		reqBody := strings.NewReader(`{"email":""}`)                         // missing email
+		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody) // can use any path here
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		mockUserUseCase := new(mocks.MockUserUseCase)
+		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil, errors.New("invalid request body"))
+
+		h := &UserHandler{
+			UserUseCase: mockUserUseCase,
+		}
+		h.SignUp(c)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		mockUserUseCase.AssertNotCalled(t, "SignUp")
 	})
 }

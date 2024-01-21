@@ -11,6 +11,7 @@ import (
 // any service it interacts with to implement
 type UserUseCase interface {
 	Get(ctx context.Context, uid uuid.UUID) (*model.User, error)
+	SignUp(ctx context.Context, u *model.User) error
 }
 
 // UserRepository defines methods the service layer expects
