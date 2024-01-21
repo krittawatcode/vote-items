@@ -9,8 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/krittawatcode/vote-items/backend/domain"
-	"github.com/krittawatcode/vote-items/backend/domain/appmock"
+	"github.com/krittawatcode/vote-items/user-service/domain"
+	"github.com/krittawatcode/vote-items/user-service/domain/appmock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -87,12 +87,16 @@ func TestUserHandler_SignUp(t *testing.T) {
 		mockUserUseCase := new(appmock.MockUserUseCase)
 		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil)
 
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockTokenUseCase.On("NewPairFromUser", mock.Anything, mock.Anything, "").Return(&domain.TokenPair{}, nil)
+
 		h := &UserHandler{
-			UserUseCase: mockUserUseCase,
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
 		}
 		h.SignUp(c)
 
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusCreated, w.Code)
 	})
 	t.Run("UserUseCase.SignUp returns error", func(t *testing.T) {
 		w := httptest.NewRecorder()
@@ -112,7 +116,6 @@ func TestUserHandler_SignUp(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
-
 	t.Run("UserUseCase.SignUp returns user already exist", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -170,5 +173,28 @@ func TestUserHandler_SignUp(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		mockUserUseCase.AssertNotCalled(t, "SignUp")
+	})
+
+	t.Run("TokenUseCase.NewPairFromUser returns error", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+
+		reqBody := strings.NewReader(`{"email":"bob@bob.com","password":"password123"}`)
+		c.Request = httptest.NewRequest(http.MethodPost, "/signUp", reqBody)
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		mockUserUseCase := new(appmock.MockUserUseCase)
+		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(nil)
+
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockTokenUseCase.On("NewPairFromUser", mock.Anything, mock.Anything, "").Return(nil, errors.New("error"))
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+		h.SignUp(c)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 }

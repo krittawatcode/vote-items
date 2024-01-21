@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/krittawatcode/vote-items/backend/domain"
+	"github.com/krittawatcode/vote-items/user-service/domain"
 )
 
 // UserUseCase acts as a struct for injecting an implementation of UserRepository

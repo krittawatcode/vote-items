@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/krittawatcode/vote-items/backend/delivery/route"
+	"github.com/krittawatcode/vote-items/user-service/delivery/route"
 )
 
 func main() {

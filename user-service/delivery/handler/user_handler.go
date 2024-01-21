@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/krittawatcode/vote-items/backend/delivery/handler/helper"
-	"github.com/krittawatcode/vote-items/backend/domain"
+	"github.com/krittawatcode/vote-items/user-service/delivery/handler/helper"
+	"github.com/krittawatcode/vote-items/user-service/domain"
 )
 
 // Handler struct holds required services for handler to function

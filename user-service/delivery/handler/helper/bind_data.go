@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/krittawatcode/vote-items/backend/domain"
+	"github.com/krittawatcode/vote-items/user-service/domain"
 )
 
 // used to help extract validation errors

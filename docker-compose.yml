@@ -16,20 +16,20 @@ services:
     volumes:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
-  vote-items-backend:
+  user-service:
     build:
-      context: ./vote-items-backend
+      context: ./user-service
       target: builder
-    image: vote-items-backend
+    image: user-service
     env_file: .env.dev
     expose:
       - "8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vote-items-backend.rule=Host(`krittawatcode.test`) && PathPrefix(`/api/v1/vote-items`)"
+      - "traefik.http.routers.user-service.rule=Host(`krittawatcode.test`) && PathPrefix(`/api/v1/user-service`)"
     environment:
       - ENV=dev
     volumes:
-      - ./vote-items-backend:/go/src/app
+      - ./user-service:/go/src/app
     # have to use $$ (double-dollar) so docker doesn't try to substitute a variable
     command: reflex -r "\.go$$" -s -- sh -c "go run ./"

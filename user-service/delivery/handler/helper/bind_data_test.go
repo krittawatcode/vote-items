@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/krittawatcode/vote-items/backend/domain"
+	"github.com/krittawatcode/vote-items/user-service/domain"
 	"github.com/stretchr/testify/assert"
 )
 

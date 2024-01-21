@@ -1,4 +1,4 @@
-module github.com/krittawatcode/vote-items/backend
+module github.com/krittawatcode/vote-items/user-service
 
 go 1.21.5
 
