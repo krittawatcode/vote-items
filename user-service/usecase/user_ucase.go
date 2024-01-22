@@ -15,7 +15,7 @@ type UserUseCase struct {
 	UserRepository domain.UserRepository
 }
 
-// USConfig will hold repositories that will eventually be injected into this
+// UUConfig will hold repositories that will eventually be injected into this
 // this service layer
 type UUConfig struct {
 	UserRepository domain.UserRepository
