@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/krittawatcode/vote-items/user-service/delivery/handler/helper"
 	"github.com/krittawatcode/vote-items/user-service/domain"
+	"github.com/krittawatcode/vote-items/user-service/domain/apperror"
 )
 
 // Handler struct holds required services for handler to function
@@ -36,7 +37,7 @@ func (h *UserHandler) Me(c *gin.Context) {
 	// methods which require a valid user
 	if !exists {
 		log.Printf("Unable to extract user from request context for unknown reason: %v\n", c)
-		err := domain.NewInternal()
+		err := apperror.NewInternal()
 		c.JSON(err.Status(), gin.H{
 			"error": err,
 		})
@@ -51,7 +52,7 @@ func (h *UserHandler) Me(c *gin.Context) {
 
 	if err != nil {
 		log.Printf("Unable to find user: %v\n%v", uid, err)
-		e := domain.NewNotFound("user", uid.String())
+		e := apperror.NewNotFound("user", uid.String())
 
 		c.JSON(e.Status(), gin.H{
 			"error": e,
@@ -88,10 +89,10 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 	}
 
 	err := h.UserUseCase.SignUp(c, u)
-
 	if err != nil {
 		log.Printf("Failed to sign up user: %v\n", err.Error())
-		c.JSON(domain.Status(err), gin.H{
+
+		c.JSON(apperror.Status(err), gin.H{
 			"error": err,
 		})
 		return
@@ -99,7 +100,6 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 
 	// create token pair as strings
 	tokens, err := h.TokenUseCase.NewPairFromUser(c, u, "")
-
 	if err != nil {
 		log.Printf("Failed to create tokens for user: %v\n", err.Error())
 
@@ -107,7 +107,7 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 		// meaning, if we fail to create tokens after creating a user,
 		// we make sure to clear/delete the created user in the database
 
-		c.JSON(domain.Status(err), gin.H{
+		c.JSON(apperror.Status(err), gin.H{
 			"error": err,
 		})
 		return

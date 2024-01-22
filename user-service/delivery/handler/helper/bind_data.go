@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/krittawatcode/vote-items/user-service/domain"
+	"github.com/krittawatcode/vote-items/user-service/domain/apperror"
 )
 
 // used to help extract validation errors
@@ -35,7 +35,7 @@ func BindData(c *gin.Context, req interface{}) bool {
 				})
 			}
 
-			err := domain.NewBadRequest("Invalid request parameters. See invalidArgs")
+			err := apperror.NewBadRequest("Invalid request parameters. See invalidArgs")
 
 			c.JSON(err.Status(), gin.H{
 				"error":       err,
@@ -48,7 +48,7 @@ func BindData(c *gin.Context, req interface{}) bool {
 
 		// if we aren't able to properly extract validation errors,
 		// we'll fallback and return an internal server error
-		fallBack := domain.NewInternal()
+		fallBack := apperror.NewInternal()
 
 		c.JSON(fallBack.Status(), gin.H{"error": fallBack})
 		return false
