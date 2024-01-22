@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/krittawatcode/vote-items/user-service/domain"
+	"github.com/krittawatcode/vote-items/user-service/domain/apperror"
 	"github.com/krittawatcode/vote-items/user-service/domain/appmock"
 
 	"github.com/stretchr/testify/assert"
@@ -124,7 +125,7 @@ func TestUserHandler_SignUp(t *testing.T) {
 		c.Request.Header.Set("Content-Type", "application/json")
 
 		mockUserUseCase := new(appmock.MockUserUseCase)
-		mockUserUseCase.On("SignUp", mock.AnythingOfType("*gin.Context"), mock.Anything).Return(domain.NewConflict("User Already Exists", "test email"))
+		mockUserUseCase.On("SignUp", mock.AnythingOfType("*gin.Context"), mock.Anything).Return(apperror.NewConflict("User Already Exists", "test email"))
 
 		h := &UserHandler{
 			UserUseCase: mockUserUseCase,
