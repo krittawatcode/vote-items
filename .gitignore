@@ -1,3 +1,4 @@
 .env.dev
 .vscode
 *.pem
+*.code-workspace
