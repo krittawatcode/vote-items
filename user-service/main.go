@@ -9,13 +9,23 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/krittawatcode/vote-items/user-service/delivery/route"
+	"github.com/krittawatcode/vote-items/user-service/database"
 )
 
 func main() {
 	log.Println("Starting server...")
 
-	router := route.SetupRouter()
+	// initialize data sources
+	ds := new(database.GormDataSources)
+	err := ds.InitDS()
+	if err != nil {
+		log.Fatalf("Unable to initialize data sources: %v\n", err)
+	}
+
+	router, err := inject(ds)
+	if err != nil {
+		log.Fatalf("Unable to inject data sources: %v\n", err)
+	}
 
 	srv := &http.Server{
 		Addr:    ":8080",
@@ -43,6 +53,11 @@ func main() {
 	// the request it is currently handling
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	// shutdown data sources
+	if err := ds.Close(); err != nil {
+		log.Fatalf("A problem occurred gracefully shutting down data sources: %v\n", err)
+	}
 
 	// Shutdown server
 	log.Println("Shutting down server...")

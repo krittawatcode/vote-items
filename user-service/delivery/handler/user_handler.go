@@ -3,24 +3,37 @@ package handler
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/krittawatcode/vote-items/user-service/delivery/handler/helper"
 	"github.com/krittawatcode/vote-items/user-service/domain"
 	"github.com/krittawatcode/vote-items/user-service/domain/apperror"
 )
 
 // Handler struct holds required services for handler to function
 type UserHandler struct {
+	Router       *gin.Engine
 	UserUseCase  domain.UserUseCase
 	TokenUseCase domain.TokenUseCase
 }
 
-// Config will hold services that will eventually be injected into this
-// handler layer on handler initialization
-type UserConfig struct {
-	R           *gin.Engine
-	UserUseCase domain.UserUseCase
+// Does not return as it deals directly with a reference to the gin Engine
+func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUseCase) {
+	// Create a handler (which will later have injected services)
+	h := &UserHandler{
+		UserUseCase:  uu,
+		TokenUseCase: tu,
+	} // currently has no properties
+
+	// Create an account group
+	g := router.Group(os.Getenv("API_URL"))
+
+	// Add a health check endpoint
+	g.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "running"})
+	})
+	g.GET("/me", h.Me)
+	g.POST("/signUp", h.SignUp)
 }
 
 // Me handler calls services for getting
@@ -45,14 +58,23 @@ func (h *UserHandler) Me(c *gin.Context) {
 		return
 	}
 
-	uid := user.(*domain.User).UID
+	u, ok := user.(*domain.User)
+	if !ok {
+		log.Printf("User is not of type *domain.User: %v\n", user)
+		err := apperror.NewInternal()
+		c.JSON(err.Status(), gin.H{
+			"error": err,
+		})
+		return
+	}
 
-	// gin.Context satisfies go's context.Context interface
-	u, err := h.UserUseCase.Get(c, uid)
+	// use the Request Context
+	ctx := c.Request.Context()
+	validatedUser, err := h.UserUseCase.Get(ctx, u.UID)
 
 	if err != nil {
-		log.Printf("Unable to find user: %v\n%v", uid, err)
-		e := apperror.NewNotFound("user", uid.String())
+		log.Printf("Unable to find user: %v\n%v", u.UID, err)
+		e := apperror.NewNotFound("user", u.UID.String())
 
 		c.JSON(e.Status(), gin.H{
 			"error": e,
@@ -61,7 +83,7 @@ func (h *UserHandler) Me(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user": u,
+		"user": validatedUser,
 	})
 }
 
@@ -79,7 +101,7 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 	var req signUpReq
 
 	// Bind incoming json to struct and check for validation errors
-	if ok := helper.BindData(c, &req); !ok {
+	if ok := bindData(c, &req); !ok {
 		return
 	}
 
@@ -87,8 +109,8 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 		Email:    req.Email,
 		Password: req.Password,
 	}
-
-	err := h.UserUseCase.SignUp(c, u)
+	ctx := c.Request.Context()
+	err := h.UserUseCase.SignUp(ctx, u)
 	if err != nil {
 		log.Printf("Failed to sign up user: %v\n", err.Error())
 
@@ -99,7 +121,7 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 	}
 
 	// create token pair as strings
-	tokens, err := h.TokenUseCase.NewPairFromUser(c, u, "")
+	tokens, err := h.TokenUseCase.NewPairFromUser(ctx, u, "")
 	if err != nil {
 		log.Printf("Failed to create tokens for user: %v\n", err.Error())
 
@@ -108,7 +130,7 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 		// we make sure to clear/delete the created user in the database
 
 		c.JSON(apperror.Status(err), gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		return
 	}
@@ -117,24 +139,3 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 		"tokens": tokens,
 	})
 }
-
-// Sign in handler
-// func (h *UserHandler) SignIn(c *gin.Context) {
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"hello": "it's sign in",
-// 	})
-// }
-
-// Sign out handler
-// func (h *UserHandler) SignOut(c *gin.Context) {
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"hello": "it's sign out",
-// 	})
-// }
-
-// Tokens handler
-// func (h *UserHandler) Tokens(c *gin.Context) {
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"hello": "it's tokens",
-// 	})
-// }

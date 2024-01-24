@@ -1,4 +1,4 @@
-package helper
+package handler
 
 import (
 	"log"
@@ -16,8 +16,8 @@ type invalidArgument struct {
 	Param string `json:"param"`
 }
 
-// BindData is helper function, returns false if data is not bound
-func BindData(c *gin.Context, req interface{}) bool {
+// bindData is helper function, returns false if data is not bound
+func bindData(c *gin.Context, req interface{}) bool {
 	// Bind incoming json to struct and check for validation errors
 	if err := c.ShouldBind(req); err != nil {
 		log.Printf("Error binding data: %+v\n", err)

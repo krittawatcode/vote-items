@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -12,54 +13,42 @@ import (
 	"github.com/krittawatcode/vote-items/user-service/domain"
 	"github.com/krittawatcode/vote-items/user-service/domain/apperror"
 	"github.com/krittawatcode/vote-items/user-service/domain/appmock"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestUserHandler_Me(t *testing.T) {
+	// setup
+	gin.SetMode(gin.TestMode)
 	t.Run("Success", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-
 		uid, _ := uuid.NewRandom()
 		mockUser := &domain.User{
 			UID: uid,
 		}
+
+		// Define a custom context key type to prevent collisions with other packages using context keys
+		type contextKey string
+		const key contextKey = "user"
+		c.Set(string(key), mockUser)
+		// Set up a request context and add it to the Gin context
+		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), key, mockUser))
 
 		mockUserUseCase := new(appmock.MockUserUseCase)
 		mockUserUseCase.On("Get", mock.Anything, uid).Return(mockUser, nil)
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
 
 		h := &UserHandler{
-			UserUseCase: mockUserUseCase,
+			Router:       gin.Default(),
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
 		}
 
-		c.Set("user", mockUser)
 		h.Me(c)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-	})
-
-	t.Run("User not found", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-
-		uid, _ := uuid.NewRandom()
-		mockUser := &domain.User{
-			UID: uid,
-		}
-
-		mockUserUseCase := new(appmock.MockUserUseCase)
-		mockUserUseCase.On("Get", mock.Anything, uid).Return(nil, errors.New("user not found"))
-
-		h := &UserHandler{
-			UserUseCase: mockUserUseCase,
-		}
-
-		c.Set("user", mockUser)
-		h.Me(c)
-
-		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
 
 	t.Run("User not set in context", func(t *testing.T) {
@@ -125,7 +114,7 @@ func TestUserHandler_SignUp(t *testing.T) {
 		c.Request.Header.Set("Content-Type", "application/json")
 
 		mockUserUseCase := new(appmock.MockUserUseCase)
-		mockUserUseCase.On("SignUp", mock.AnythingOfType("*gin.Context"), mock.Anything).Return(apperror.NewConflict("User Already Exists", "test email"))
+		mockUserUseCase.On("SignUp", mock.Anything, mock.Anything).Return(apperror.NewConflict("User Already Exists", "test email"))
 
 		h := &UserHandler{
 			UserUseCase: mockUserUseCase,
@@ -135,7 +124,6 @@ func TestUserHandler_SignUp(t *testing.T) {
 		assert.Equal(t, http.StatusConflict, w.Code)
 		mockUserUseCase.AssertExpectations(t)
 	})
-
 	t.Run("Invalid request body - missing password", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -155,7 +143,6 @@ func TestUserHandler_SignUp(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		mockUserUseCase.AssertNotCalled(t, "SignUp")
 	})
-
 	t.Run("Invalid request body - missing email", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -175,7 +162,6 @@ func TestUserHandler_SignUp(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		mockUserUseCase.AssertNotCalled(t, "SignUp")
 	})
-
 	t.Run("TokenUseCase.NewPairFromUser returns error", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)

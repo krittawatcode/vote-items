@@ -16,7 +16,7 @@ import (
 
 func TestGet(t *testing.T) {
 	mockRepo := new(appmock.MockUserRepository)
-	userUseCase := &UserUseCase{
+	userUseCase := &userUseCase{
 		UserRepository: mockRepo,
 	}
 
@@ -60,9 +60,7 @@ func TestSignUp(t *testing.T) {
 		}
 
 		mockUserRepository := new(appmock.MockUserRepository)
-		userService := NewUserUseCase(&UUConfig{
-			UserRepository: mockUserRepository,
-		})
+		userService := NewUserUseCase(mockUserRepository)
 
 		// We can use Run method to modify the user when the Create method is called.
 		//  We can then chain on a Return method to return no error
@@ -90,9 +88,7 @@ func TestSignUp(t *testing.T) {
 		}
 
 		mockUserRepository := new(appmock.MockUserRepository)
-		userService := NewUserUseCase(&UUConfig{
-			UserRepository: mockUserRepository,
-		})
+		userService := NewUserUseCase(mockUserRepository)
 
 		mockErr := apperror.NewConflict("email", mockUser.Email)
 
