@@ -22,7 +22,13 @@ func main() {
 		log.Fatalf("Unable to initialize data sources: %v\n", err)
 	}
 
-	router, err := inject(ds)
+	rc := new(database.RedisDataSources)
+	err = rc.InitRC()
+	if err != nil {
+		log.Fatalf("Unable to initialize data sources: %v\n", err)
+	}
+
+	router, err := inject(ds, rc)
 	if err != nil {
 		log.Fatalf("Unable to inject data sources: %v\n", err)
 	}

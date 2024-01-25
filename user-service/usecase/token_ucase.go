@@ -12,6 +12,7 @@ import (
 // tokenUseCase acts as a struct for injecting an implementation of TokenRepository
 // for use in service methods
 type tokenUseCase struct {
+	TokenRepository       domain.TokenRepository
 	PrivKey               *rsa.PrivateKey
 	PubKey                *rsa.PublicKey
 	RefreshSecret         string
@@ -21,8 +22,9 @@ type tokenUseCase struct {
 
 // NewTokenUseCase is a factory function for
 // initializing a TokenUseCase with its usecase layer dependencies
-func NewTokenUseCase(privKey *rsa.PrivateKey, pubKey *rsa.PublicKey, refreshSecret string, idExpirationSecs int64, refreshExpirationSecs int64) domain.TokenUseCase {
+func NewTokenUseCase(r domain.TokenRepository, privKey *rsa.PrivateKey, pubKey *rsa.PublicKey, refreshSecret string, idExpirationSecs int64, refreshExpirationSecs int64) domain.TokenUseCase {
 	return &tokenUseCase{
+		TokenRepository:       r,
 		PrivKey:               privKey,
 		PubKey:                pubKey,
 		RefreshSecret:         refreshSecret,
@@ -50,7 +52,18 @@ func (s *tokenUseCase) NewPairFromUser(ctx context.Context, u *domain.User, prev
 		return nil, apperror.NewInternal()
 	}
 
-	// TODO: store refresh tokens by calling TokenRepository methods
+	// set freshly minted refresh token to valid list
+	if err := s.TokenRepository.SetRefreshToken(ctx, u.UID.String(), refreshToken.ID, refreshToken.ExpiresIn); err != nil {
+		log.Printf("Error storing tokenID for uid: %v. Error: %v\n", u.UID, err.Error())
+		return nil, apperror.NewInternal()
+	}
+
+	// delete user's current refresh token (used when refreshing idToken)
+	if prevTokenID != "" {
+		if err := s.TokenRepository.DeleteRefreshToken(ctx, u.UID.String(), prevTokenID); err != nil {
+			log.Printf("Could not delete previous refreshToken for uid: %v, tokenID: %v\n", u.UID.String(), prevTokenID)
+		}
+	}
 
 	return &domain.TokenPair{
 		IDToken:      idToken,
