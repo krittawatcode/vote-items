@@ -62,5 +62,24 @@ func (s *userUseCase) SignUp(ctx context.Context, u *domain.User) error {
 // if a valid email/password combo is provided, u will hold all
 // available user fields
 func (s *userUseCase) SignIn(ctx context.Context, u *domain.User) error {
-	panic("Not implemented")
+	uFetched, err := s.UserRepository.FindByEmail(ctx, u.Email)
+
+	// Will return NotAuthorized to client to omit details of why
+	if err != nil {
+		return apperror.NewAuthorization("Invalid email and password combination")
+	}
+
+	// verify password - we previously created this method
+	match, err := comparePasswords(uFetched.Password, u.Password)
+
+	if err != nil {
+		return apperror.NewInternal()
+	}
+
+	if !match {
+		return apperror.NewAuthorization("Invalid email and password combination")
+	}
+
+	u = uFetched
+	return nil
 }
