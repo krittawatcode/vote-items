@@ -48,3 +48,12 @@ func (r *gormUserRepository) FindByID(ctx context.Context, uid uuid.UUID) (*doma
 	}
 	return user, nil
 }
+
+// FindByEmail retrieves user row by email address
+func (r *gormUserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+	user := &domain.User{}
+	if err := r.conn.Where("email = ?", email).First(user).Error; err != nil {
+		return user, apperror.NewNotFound("email", email)
+	}
+	return user, nil
+}
