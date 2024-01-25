@@ -17,6 +17,7 @@ const (
 	Internal             Type = "INTERNAL"             // Server (500) and fallback errors
 	NotFound             Type = "NOTFOUND"             // For not finding resource
 	PayloadTooLarge      Type = "PAYLOADTOOLARGE"      // for uploading tons of JSON, or an image over the limit - 413
+	ServiceUnavailable   Type = "SERVICE_UNAVAILABLE"  // For long running handlers
 	UnsupportedMediaType Type = "UNSUPPORTEDMEDIATYPE" // for http 415
 )
 
@@ -119,6 +120,14 @@ func NewPayloadTooLarge(maxBodySize int64, contentLength int64) *Error {
 	return &Error{
 		Type:    PayloadTooLarge,
 		Message: fmt.Sprintf("Max payload size of %v exceeded. Actual payload size: %v", maxBodySize, contentLength),
+	}
+}
+
+// NewServiceUnavailable to create an error for 503
+func NewServiceUnavailable() *Error {
+	return &Error{
+		Type:    ServiceUnavailable,
+		Message: "Service unavailable or timed out",
 	}
 }
 
