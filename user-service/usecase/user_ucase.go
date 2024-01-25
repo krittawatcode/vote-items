@@ -11,26 +11,20 @@ import (
 
 // UserUseCase acts as a struct for injecting an implementation of UserRepository
 // for use in service methods
-type UserUseCase struct {
-	UserRepository domain.UserRepository
-}
-
-// UUConfig will hold repositories that will eventually be injected into this
-// this service layer
-type UUConfig struct {
+type userUseCase struct {
 	UserRepository domain.UserRepository
 }
 
 // NewUserUseCase is a factory function for
-// initializing a UserService with its repository layer dependencies
-func NewUserUseCase(c *UUConfig) domain.UserUseCase {
-	return &UserUseCase{
-		UserRepository: c.UserRepository,
+// initializing a NewUserUseCase with its usecase layer dependencies
+func NewUserUseCase(r domain.UserRepository) domain.UserUseCase {
+	return &userUseCase{
+		UserRepository: r,
 	}
 }
 
 // Get retrieves a user based on their uuid
-func (s *UserUseCase) Get(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
+func (s *userUseCase) Get(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
 	u, err := s.UserRepository.FindByID(ctx, uid)
 
 	return u, err
@@ -38,7 +32,7 @@ func (s *UserUseCase) Get(ctx context.Context, uid uuid.UUID) (*domain.User, err
 
 // Sign up reaches our to a UserRepository to verify the
 // email address is available and signs up the user if this is the case
-func (s *UserUseCase) SignUp(ctx context.Context, u *domain.User) error {
+func (s *userUseCase) SignUp(ctx context.Context, u *domain.User) error {
 	pw, err := hashPassword(u.Password)
 
 	if err != nil {
@@ -46,8 +40,6 @@ func (s *UserUseCase) SignUp(ctx context.Context, u *domain.User) error {
 		return apperror.NewInternal()
 	}
 
-	// now I realize why I originally used SignUp(ctx, email, password)
-	// then created a user. It's somewhat un-natural to mutate the user here
 	u.Password = pw
 
 	err = s.UserRepository.Create(ctx, u)

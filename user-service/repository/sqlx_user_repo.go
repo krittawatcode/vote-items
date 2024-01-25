@@ -7,26 +7,26 @@ import (
 	"github.com/google/uuid"
 	"github.com/krittawatcode/vote-items/user-service/domain"
 	"github.com/krittawatcode/vote-items/user-service/domain/apperror"
+	"github.com/lib/pq"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
-// PGUserRepository is data/repository implementation
+// pgUserRepository is data/repository implementation
 // of service layer UserRepository
-type PGUserRepository struct {
+type pgUserRepository struct {
 	DB *sqlx.DB
 }
 
 // NewUserRepository is a factory for initializing User Repositories
 func NewUserRepository(db *sqlx.DB) domain.UserRepository {
-	return &PGUserRepository{
+	return &pgUserRepository{
 		DB: db,
 	}
 }
 
 // Create reaches out to database SQLX api
-func (r *PGUserRepository) Create(ctx context.Context, u *domain.User) error {
+func (r *pgUserRepository) Create(ctx context.Context, u *domain.User) error {
 	query := "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *"
 
 	if err := r.DB.Get(u, query, u.Email, u.Password); err != nil {
@@ -43,7 +43,7 @@ func (r *PGUserRepository) Create(ctx context.Context, u *domain.User) error {
 }
 
 // FindByID fetches user by id
-func (r *PGUserRepository) FindByID(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
+func (r *pgUserRepository) FindByID(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
 	user := &domain.User{}
 
 	query := "SELECT * FROM users WHERE uid=$1"
