@@ -18,13 +18,14 @@ import (
 // which inject into repository layer
 // which inject into service layer
 // which inject into handler layer
-func inject(d *database.GormDataSources) (*gin.Engine, error) {
+func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Engine, error) {
 	log.Println("Injecting data sources")
 
 	/*
 	 * repository layer
 	 */
 	userRepository := repository.NewGormUserRepository(d.DB)
+	tokenRepository := repository.NewTokenRepository(r.RedisClient)
 
 	/*
 	 * usecase layer
@@ -75,7 +76,7 @@ func inject(d *database.GormDataSources) (*gin.Engine, error) {
 		return nil, fmt.Errorf("could not parse REFRESH_TOKEN_EXP as int: %w", err)
 	}
 
-	tokenUseCase := usecase.NewTokenUseCase(privKey, pubKey, refreshSecret, idExp, refreshExp)
+	tokenUseCase := usecase.NewTokenUseCase(tokenRepository, privKey, pubKey, refreshSecret, idExp, refreshExp)
 
 	// initialize gin.Engine
 	router := gin.Default()

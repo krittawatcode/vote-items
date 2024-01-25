@@ -28,6 +28,12 @@ services:
       - "pgdata_vote_items:/var/lib/postgresql/data"
       # - ./init:/docker-entrypoint-initdb.d/
     command: [ "postgres", "-c", "log_statement=all" ]
+  redis-vote-items:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    volumes:
+      - "redisdata:/data"
   user-service:
     build:
       context: ./user-service
@@ -46,6 +52,8 @@ services:
     # have to use $$ (double-dollar) so docker doesn't try to substitute a variable
     depends_on:
       - postgres-vote-items
+      - redis-vote-items
     command: reflex -r "\.go$$" -s -- sh -c "go run ./"
 volumes:
   pgdata_vote_items:
+  redisdata:
