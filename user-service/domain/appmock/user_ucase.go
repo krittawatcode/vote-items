@@ -47,3 +47,15 @@ func (m *MockUserUseCase) SignUp(ctx context.Context, u *domain.User) error {
 
 	return r0
 }
+
+// SignIn is a mock of UserService.Signin
+func (m *MockUserUseCase) SignIn(ctx context.Context, u *domain.User) error {
+	ret := m.Called(ctx, u)
+
+	var r0 error
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(error)
+	}
+
+	return r0
+}
