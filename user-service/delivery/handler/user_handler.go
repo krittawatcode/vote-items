@@ -148,10 +148,48 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 	})
 }
 
-// Sign in handler
+// signInReq is not exported
+type signInReq struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,gte=6,lte=30"`
+}
+
+// SignIn used to authenticate extant user
 func (h *UserHandler) SignIn(c *gin.Context) {
-	time.Sleep(6 * time.Second) // to demonstrate a timeout
+	var req signInReq
+
+	if ok := bindData(c, &req); !ok {
+		return
+	}
+
+	u := &domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	ctx := c.Request.Context()
+	err := h.UserUseCase.SignIn(ctx, u)
+
+	if err != nil {
+		log.Printf("Failed to sign in user: %v\n", err.Error())
+		c.JSON(apperror.Status(err), gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	tokens, err := h.TokenUseCase.NewPairFromUser(ctx, u, "")
+
+	if err != nil {
+		log.Printf("Failed to create tokens for user: %v\n", err.Error())
+
+		c.JSON(apperror.Status(err), gin.H{
+			"error": err,
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"hello": "it's signin",
+		"tokens": tokens,
 	})
 }

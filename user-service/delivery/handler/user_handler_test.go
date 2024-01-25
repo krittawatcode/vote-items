@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -183,5 +185,194 @@ func TestUserHandler_SignUp(t *testing.T) {
 		h.SignUp(c)
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestSignIn(t *testing.T) {
+	// Setup
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Bad request data", func(t *testing.T) {
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rr)
+
+		reqBody := strings.NewReader(`{"email":"bob@bob.com","password":"short"}`)
+		c.Request = httptest.NewRequest(http.MethodPost, "/signIp", reqBody)
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		mockUserUseCase := new(appmock.MockUserUseCase)
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+
+		h.SignIn(c)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		mockUserUseCase.AssertNotCalled(t, "SignIn")
+		mockTokenUseCase.AssertNotCalled(t, "NewTokensFromUser")
+	})
+
+	t.Run("Error Returned from UserUseCase.SignIn", func(t *testing.T) {
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rr)
+
+		email := "bob@bob.com"
+		password := "pwdoesnotmatch123"
+
+		mockUSArgs := mock.Arguments{
+			mock.Anything,
+			&domain.User{Email: email, Password: password},
+		}
+
+		// so we can check for a known status code
+		mockError := apperror.NewAuthorization("invalid email/password combo")
+
+		mockUserUseCase := new(appmock.MockUserUseCase)
+		mockUserUseCase.On("SignIn", mockUSArgs...).Return(mockError)
+
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+
+		// create a request body with valid fields
+		reqBody, err := json.Marshal(gin.H{
+			"email":    email,
+			"password": password,
+		})
+		assert.NoError(t, err)
+		c.Request = httptest.NewRequest(http.MethodPost, "/signIn", bytes.NewBuffer(reqBody))
+		c.Request.Header.Set("Content-Type", "application/json")
+		assert.NoError(t, err)
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+
+		h.SignIn(c)
+
+		mockUserUseCase.AssertCalled(t, "SignIn", mockUSArgs...)
+		mockTokenUseCase.AssertNotCalled(t, "NewTokensFromUser")
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("Successful Token Creation", func(t *testing.T) {
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rr)
+
+		email := "bob@bob.com"
+		password := "pwworksgreat123"
+
+		mockUSArgs := mock.Arguments{
+			mock.Anything,
+			&domain.User{Email: email, Password: password},
+		}
+
+		mockUserUseCase := new(appmock.MockUserUseCase)
+		mockUserUseCase.On("SignIn", mockUSArgs...).Return(nil)
+
+		mockTSArgs := mock.Arguments{
+			mock.Anything,
+			&domain.User{Email: email, Password: password},
+			"",
+		}
+
+		mockTokenPair := &domain.TokenPair{
+			IDToken:      "idToken",
+			RefreshToken: "refreshToken",
+		}
+
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockTokenUseCase.On("NewPairFromUser", mockTSArgs...).Return(mockTokenPair, nil)
+
+		// create a request body with valid fields
+		reqBody, err := json.Marshal(gin.H{
+			"email":    email,
+			"password": password,
+		})
+		assert.NoError(t, err)
+
+		c.Request = httptest.NewRequest(http.MethodPost, "/signIn", bytes.NewBuffer(reqBody))
+		c.Request.Header.Set("Content-Type", "application/json")
+		assert.NoError(t, err)
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+
+		h.SignIn(c)
+
+		respBody, err := json.Marshal(gin.H{
+			"tokens": mockTokenPair,
+		})
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, respBody, rr.Body.Bytes())
+
+		mockUserUseCase.AssertCalled(t, "SignIn", mockUSArgs...)
+		mockTokenUseCase.AssertCalled(t, "NewPairFromUser", mockTSArgs...)
+	})
+
+	t.Run("Failed Token Creation", func(t *testing.T) {
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rr)
+
+		email := "cannotproducetoken@bob.com"
+		password := "cannotproducetoken"
+
+		mockUSArgs := mock.Arguments{
+			mock.Anything,
+			&domain.User{Email: email, Password: password},
+		}
+
+		mockUserUseCase := new(appmock.MockUserUseCase)
+		mockUserUseCase.On("SignIn", mockUSArgs...).Return(nil)
+
+		mockTSArgs := mock.Arguments{
+			mock.Anything,
+			&domain.User{Email: email, Password: password},
+			"",
+		}
+
+		mockError := apperror.NewInternal()
+
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockTokenUseCase.On("NewPairFromUser", mockTSArgs...).Return(nil, mockError)
+
+		// create a request body with valid fields
+		reqBody, err := json.Marshal(gin.H{
+			"email":    email,
+			"password": password,
+		})
+		assert.NoError(t, err)
+
+		c.Request = httptest.NewRequest(http.MethodPost, "/signIn", bytes.NewBuffer(reqBody))
+		c.Request.Header.Set("Content-Type", "application/json")
+		assert.NoError(t, err)
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+
+		h.SignIn(c)
+
+		respBody, err := json.Marshal(gin.H{
+			"error": mockError,
+		})
+		assert.NoError(t, err)
+
+		assert.Equal(t, mockError.Status(), rr.Code)
+		assert.Equal(t, respBody, rr.Body.Bytes())
+
+		mockUserUseCase.AssertCalled(t, "SignIn", mockUSArgs...)
+		mockTokenUseCase.AssertCalled(t, "NewPairFromUser", mockTSArgs...)
 	})
 }

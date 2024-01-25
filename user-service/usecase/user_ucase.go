@@ -56,3 +56,11 @@ func (s *userUseCase) SignUp(ctx context.Context, u *domain.User) error {
 
 	return nil
 }
+
+// SignIn reaches our to a UserRepository check if the user exists
+// and then compares the supplied password with the provided password
+// if a valid email/password combo is provided, u will hold all
+// available user fields
+func (s *userUseCase) SignIn(ctx context.Context, u *domain.User) error {
+	panic("Not implemented")
+}
