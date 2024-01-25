@@ -3,22 +3,25 @@ package handler
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/krittawatcode/vote-items/user-service/delivery/handler/middleware"
 	"github.com/krittawatcode/vote-items/user-service/domain"
 	"github.com/krittawatcode/vote-items/user-service/domain/apperror"
 )
 
 // Handler struct holds required services for handler to function
 type UserHandler struct {
-	Router       *gin.Engine
-	UserUseCase  domain.UserUseCase
-	TokenUseCase domain.TokenUseCase
-	BaseUrl      string // base url for user routes
+	Router          *gin.Engine
+	UserUseCase     domain.UserUseCase
+	TokenUseCase    domain.TokenUseCase
+	BaseUrl         string // base url for user routes
+	TimeoutDuration time.Duration
 }
 
 // Does not return as it deals directly with a reference to the gin Engine
-func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUseCase, baseUrl string) {
+func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUseCase, baseUrl string, timeout time.Duration) {
 	// Create a handler (which will later have injected services)
 	h := &UserHandler{
 		UserUseCase:  uu,
@@ -28,12 +31,17 @@ func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUs
 	// Create an account group
 	g := router.Group(baseUrl)
 
+	if gin.Mode() != gin.TestMode {
+		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
+	}
+
 	// Add a health check endpoint
 	g.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "running"})
 	})
 	g.GET("/me", h.Me)
 	g.POST("/signUp", h.SignUp)
+	g.POST("/singIn", h.SignIn)
 }
 
 // Me handler calls services for getting
@@ -137,5 +145,13 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"tokens": tokens,
+	})
+}
+
+// Sign in handler
+func (h *UserHandler) SignIn(c *gin.Context) {
+	time.Sleep(6 * time.Second) // to demonstrate a timeout
+	c.JSON(http.StatusOK, gin.H{
+		"hello": "it's signin",
 	})
 }
