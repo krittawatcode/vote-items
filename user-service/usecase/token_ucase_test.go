@@ -20,8 +20,12 @@ func TestNewPairFromUser(t *testing.T) {
 	pubKey, _ := jwt.ParseRSAPublicKeyFromPEM(pub)
 	secret := "anotsorandomtestsecret"
 
+	// define token expiration times
+	idTokenExp := int64(15 * 60)
+	refreshTokenExp := int64(3 * 24 * 2600)
+
 	// instantiate a common token usecase to be used by all tests
-	tokenUseCase := NewTokenUseCase(privKey, pubKey, secret)
+	tokenUseCase := NewTokenUseCase(privKey, pubKey, secret, idTokenExp, refreshTokenExp)
 
 	// include password to make sure it is not serialized
 	// since json tag is "-"
@@ -64,7 +68,7 @@ func TestNewPairFromUser(t *testing.T) {
 		assert.Empty(t, idTokenClaims.User.Password) // password should never be encoded to json
 
 		expiresAt := time.Unix(idTokenClaims.StandardClaims.ExpiresAt, 0)
-		expectedExpiresAt := time.Now().Add(15 * time.Minute)
+		expectedExpiresAt := time.Now().Add(time.Duration(idTokenExp) * time.Second)
 		assert.WithinDuration(t, expectedExpiresAt, expiresAt, 5*time.Second)
 
 		refreshTokenClaims := &RefreshTokenCustomClaims{}
@@ -79,7 +83,7 @@ func TestNewPairFromUser(t *testing.T) {
 		assert.Equal(t, u.UID, refreshTokenClaims.UID)
 
 		expiresAt = time.Unix(refreshTokenClaims.StandardClaims.ExpiresAt, 0)
-		expectedExpiresAt = time.Now().Add(3 * 24 * time.Hour)
+		expectedExpiresAt = time.Now().Add(time.Duration(refreshTokenExp) * time.Second)
 		assert.WithinDuration(t, expectedExpiresAt, expiresAt, 5*time.Second)
 	})
 }

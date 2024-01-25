@@ -3,7 +3,6 @@ package handler
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/krittawatcode/vote-items/user-service/domain"
@@ -15,18 +14,19 @@ type UserHandler struct {
 	Router       *gin.Engine
 	UserUseCase  domain.UserUseCase
 	TokenUseCase domain.TokenUseCase
+	BaseUrl      string // base url for user routes
 }
 
 // Does not return as it deals directly with a reference to the gin Engine
-func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUseCase) {
+func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUseCase, baseUrl string) {
 	// Create a handler (which will later have injected services)
 	h := &UserHandler{
 		UserUseCase:  uu,
 		TokenUseCase: tu,
-	} // currently has no properties
+	}
 
 	// Create an account group
-	g := router.Group(os.Getenv("API_URL"))
+	g := router.Group(baseUrl)
 
 	// Add a health check endpoint
 	g.GET("/health", func(c *gin.Context) {

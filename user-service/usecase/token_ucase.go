@@ -12,18 +12,22 @@ import (
 // tokenUseCase acts as a struct for injecting an implementation of TokenRepository
 // for use in service methods
 type tokenUseCase struct {
-	PrivKey       *rsa.PrivateKey
-	PubKey        *rsa.PublicKey
-	RefreshSecret string
+	PrivKey               *rsa.PrivateKey
+	PubKey                *rsa.PublicKey
+	RefreshSecret         string
+	IDExpirationSecs      int64
+	RefreshExpirationSecs int64
 }
 
 // NewTokenUseCase is a factory function for
 // initializing a TokenUseCase with its usecase layer dependencies
-func NewTokenUseCase(privKey *rsa.PrivateKey, pubKey *rsa.PublicKey, refreshSecret string) domain.TokenUseCase {
+func NewTokenUseCase(privKey *rsa.PrivateKey, pubKey *rsa.PublicKey, refreshSecret string, idExpirationSecs int64, refreshExpirationSecs int64) domain.TokenUseCase {
 	return &tokenUseCase{
-		PrivKey:       privKey,
-		PubKey:        pubKey,
-		RefreshSecret: refreshSecret,
+		PrivKey:               privKey,
+		PubKey:                pubKey,
+		RefreshSecret:         refreshSecret,
+		IDExpirationSecs:      idExpirationSecs,
+		RefreshExpirationSecs: refreshExpirationSecs,
 	}
 }
 
@@ -32,14 +36,14 @@ func NewTokenUseCase(privKey *rsa.PrivateKey, pubKey *rsa.PublicKey, refreshSecr
 // the tokens repository
 func (s *tokenUseCase) NewPairFromUser(ctx context.Context, u *domain.User, prevTokenID string) (*domain.TokenPair, error) {
 	// No need to use a repository for idToken as it is unrelated to any data source
-	idToken, err := generateIDToken(u, s.PrivKey)
+	idToken, err := generateIDToken(u, s.PrivKey, s.IDExpirationSecs)
 
 	if err != nil {
 		log.Printf("Error generating idToken for uid: %v. Error: %v\n", u.UID, err.Error())
 		return nil, apperror.NewInternal()
 	}
 
-	refreshToken, err := generateRefreshToken(u.UID, s.RefreshSecret)
+	refreshToken, err := generateRefreshToken(u.UID, s.RefreshSecret, s.RefreshExpirationSecs)
 
 	if err != nil {
 		log.Printf("Error generating refreshToken for uid: %v. Error: %v\n", u.UID, err.Error())

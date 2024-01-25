@@ -38,6 +38,11 @@ func TestError_Status(t *testing.T) {
 		assert.Equal(t, http.StatusRequestEntityTooLarge, err.Status())
 	})
 
+	t.Run("UnsupportedMediaType", func(t *testing.T) {
+		err := &Error{Type: UnsupportedMediaType}
+		assert.Equal(t, http.StatusUnsupportedMediaType, err.Status())
+	})
+
 	t.Run("Default", func(t *testing.T) {
 		err := &Error{} // some type that is not defined
 		assert.Equal(t, http.StatusInternalServerError, err.Status())
