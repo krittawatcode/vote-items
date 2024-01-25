@@ -70,3 +70,17 @@ func (s *tokenUseCase) NewPairFromUser(ctx context.Context, u *domain.User, prev
 		RefreshToken: refreshToken.SS,
 	}, nil
 }
+
+// ValidateIDToken validates the id token jwt string
+// It returns the user extract from the IDTokenCustomClaims
+func (s *tokenUseCase) ValidateIDToken(tokenString string) (*domain.User, error) {
+	claims, err := validateIDToken(tokenString, s.PubKey) // uses public RSA key
+
+	// We'll just return unauthorized error in all instances of failing to verify user
+	if err != nil {
+		log.Printf("Unable to validate or parse idToken - Error: %v\n", err)
+		return nil, apperror.NewAuthorization("Unable to verify user from idToken")
+	}
+
+	return claims.User, nil
+}

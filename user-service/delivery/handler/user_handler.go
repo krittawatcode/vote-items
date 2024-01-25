@@ -39,7 +39,14 @@ func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUs
 	g.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "running"})
 	})
-	g.GET("/me", h.Me)
+
+	if gin.Mode() != gin.TestMode {
+		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
+		g.GET("/me", middleware.AuthUser(h.TokenUseCase), h.Me)
+	} else {
+		g.GET("/me", h.Me)
+	}
+
 	g.POST("/signUp", h.SignUp)
 	g.POST("/singIn", h.SignIn)
 }
