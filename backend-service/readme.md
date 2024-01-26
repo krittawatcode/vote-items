@@ -1,15 +1,13 @@
-# Vote-Item API Service
+# User Service API
 
-## Overview
+## Introduction
 
-This service is a backend API designed to manage voting on items. It provides endpoints for creating, updating, deleting, and retrieving vote items, as well as casting and counting votes.
+Welcome to the User Service API. This service is designed to manage user data for applications. It provides a set of APIs that allow clients to create, update and retrieve user profiles.
 
 ## Features
 
-- **Item Management**: Create, update, delete, and retrieve vote items.
-- **Voting**: Cast votes for items and retrieve vote counts.
-
-## Getting Started
+- **User Management**: APIs for creating, updating, deleting, and retrieving user profiles.
+- **Authentication**: APIs for user authentication, including sign up and sign in.
 
 ### Prerequisites
 
