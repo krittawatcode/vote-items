@@ -22,13 +22,13 @@ type UserHandler struct {
 
 // Does not return as it deals directly with a reference to the gin Engine
 func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUseCase, baseUrl string, timeout time.Duration) {
-	// Create a handler (which will later have injected services)
+	// Create a handler (which will later have injected usecase)
 	h := &UserHandler{
 		UserUseCase:  uu,
 		TokenUseCase: tu,
 	}
 
-	// Create an account group
+	// Create an user group
 	g := router.Group(baseUrl)
 
 	if gin.Mode() != gin.TestMode {

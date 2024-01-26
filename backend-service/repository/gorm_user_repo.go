@@ -17,7 +17,7 @@ type gormUserRepository struct {
 	conn *gorm.DB
 }
 
-// NewToDoRepository ...
+// NewGormUserRepository ...
 func NewGormUserRepository(conn *gorm.DB) domain.UserRepository {
 	return &gormUserRepository{conn}
 }

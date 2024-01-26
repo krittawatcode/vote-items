@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/krittawatcode/vote-items/backend-service/database"
+	"github.com/krittawatcode/vote-items/backend-service/domain"
 )
 
 func main() {
@@ -21,6 +22,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to initialize data sources: %v\n", err)
 	}
+
+	ds.DB.AutoMigrate(&domain.User{}, &domain.VoteSession{}, &domain.VoteItem{})
 
 	rc := new(database.RedisDataSources)
 	err = rc.InitRC()

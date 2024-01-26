@@ -27,11 +27,14 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	 */
 	userRepository := repository.NewGormUserRepository(d.DB)
 	tokenRepository := repository.NewTokenRepository(r.RedisClient)
-
+	voteSessionRepository := repository.NewGormVoteSessionRepository(d.DB)
+	voteItemRepository := repository.NewGormVoteItemRepository(d.DB)
 	/*
 	 * usecase layer
 	 */
 	userUseCase := usecase.NewUserUseCase(userRepository)
+	voteSessionUseCase := usecase.NewVoteSessionUsecase(voteSessionRepository)
+	voteItemUseCase := usecase.NewVoteItemUsecase(voteItemRepository)
 
 	// load rsa keys
 	privKeyFile := os.Getenv("PRIV_KEY_FILE")
@@ -84,6 +87,7 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 
 	// read in API_URL
 	baseURL := os.Getenv("API_URL")
+	userPath := os.Getenv("USER_PATH")
 
 	// read in HANDLER_TIMEOUT
 	handlerTimeout := os.Getenv("HANDLER_TIMEOUT")
@@ -92,7 +96,13 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 		return nil, fmt.Errorf("could not parse HANDLER_TIMEOUT as int: %w", err)
 	}
 
-	handler.NewUserHandler(router, userUseCase, tokenUseCase, baseURL, time.Duration(time.Duration(ht)*time.Second))
+	handler.NewUserHandler(router, userUseCase, tokenUseCase, baseURL+userPath, time.Duration(time.Duration(ht)*time.Second))
+
+	/*
+	 * setup vote item handler
+	 */
+
+	handler.NewVoteItemsHandler(router, voteItemUseCase, voteSessionUseCase, tokenUseCase, baseURL, time.Duration(time.Duration(ht)*time.Second))
 
 	return router, nil
 }
