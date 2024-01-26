@@ -39,9 +39,17 @@ func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUs
 	g.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "running"})
 	})
-	g.GET("/me", h.Me)
+
+	if gin.Mode() != gin.TestMode {
+		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
+		g.GET("/me", middleware.AuthUser(h.TokenUseCase), h.Me)
+	} else {
+		g.GET("/me", h.Me)
+	}
+
 	g.POST("/signUp", h.SignUp)
 	g.POST("/singIn", h.SignIn)
+	g.POST("/tokens", h.Tokens)
 }
 
 // Me handler calls services for getting
@@ -182,6 +190,58 @@ func (h *UserHandler) SignIn(c *gin.Context) {
 
 	if err != nil {
 		log.Printf("Failed to create tokens for user: %v\n", err.Error())
+
+		c.JSON(apperror.Status(err), gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"tokens": tokens,
+	})
+}
+
+type tokensReq struct {
+	RefreshToken string `json:"refreshToken" binding:"required"`
+}
+
+// Tokens handler
+func (h *UserHandler) Tokens(c *gin.Context) {
+	// bind JSON to req of type tokensRew
+	var req tokensReq
+
+	if ok := bindData(c, &req); !ok {
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	// verify refresh JWT
+	refreshToken, err := h.TokenUseCase.ValidateRefreshToken(req.RefreshToken)
+
+	if err != nil {
+		c.JSON(apperror.Status(err), gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	// get up-to-date user
+	u, err := h.UserUseCase.Get(ctx, refreshToken.UID)
+
+	if err != nil {
+		c.JSON(apperror.Status(err), gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	// create fresh pair of tokens
+	tokens, err := h.TokenUseCase.NewPairFromUser(ctx, u, refreshToken.ID.String())
+
+	if err != nil {
+		log.Printf("Failed to create tokens for user: %+v. Error: %v\n", u, err.Error())
 
 		c.JSON(apperror.Status(err), gin.H{
 			"error": err,

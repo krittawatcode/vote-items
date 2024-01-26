@@ -282,8 +282,8 @@ func TestSignIn(t *testing.T) {
 		}
 
 		mockTokenPair := &domain.TokenPair{
-			IDToken:      "idToken",
-			RefreshToken: "refreshToken",
+			IDToken:      domain.IDToken{SS: "idToken"},
+			RefreshToken: domain.RefreshToken{SS: "refreshToken"},
 		}
 
 		mockTokenUseCase := new(appmock.MockTokenUseCase)
@@ -375,4 +375,229 @@ func TestSignIn(t *testing.T) {
 		mockUserUseCase.AssertCalled(t, "SignIn", mockUSArgs...)
 		mockTokenUseCase.AssertCalled(t, "NewPairFromUser", mockTSArgs...)
 	})
+}
+
+func TestTokens(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Invalid request", func(t *testing.T) {
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rr)
+
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
+
+		// create a request body with invalid fields
+		reqBody, _ := json.Marshal(gin.H{
+			"notRefreshToken": "this key is not valid for this handler!",
+		})
+
+		c.Request = httptest.NewRequest(http.MethodPost, "/tokens", bytes.NewBuffer(reqBody))
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+		h.Tokens(c)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		mockTokenUseCase.AssertNotCalled(t, "ValidateRefreshToken")
+		mockUserUseCase.AssertNotCalled(t, "Get")
+		mockTokenUseCase.AssertNotCalled(t, "NewPairFromUser")
+	})
+
+	t.Run("Invalid token", func(t *testing.T) {
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rr)
+
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
+
+		invalidTokenString := "invalid"
+		mockErrorMessage := "authProbs"
+		mockError := apperror.NewAuthorization(mockErrorMessage)
+
+		mockTokenUseCase.
+			On("ValidateRefreshToken", invalidTokenString).
+			Return(nil, mockError)
+
+		// create a request body with invalid fields
+		reqBody, _ := json.Marshal(gin.H{
+			"refreshToken": invalidTokenString,
+		})
+
+		c.Request = httptest.NewRequest(http.MethodPost, "/tokens", bytes.NewBuffer(reqBody))
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		respBody, _ := json.Marshal(gin.H{
+			"error": mockError,
+		})
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+		h.Tokens(c)
+
+		assert.Equal(t, mockError.Status(), rr.Code)
+		assert.Equal(t, respBody, rr.Body.Bytes())
+		mockTokenUseCase.AssertCalled(t, "ValidateRefreshToken", invalidTokenString)
+		mockUserUseCase.AssertNotCalled(t, "Get")
+		mockTokenUseCase.AssertNotCalled(t, "NewPairFromUser")
+	})
+
+	t.Run("Failure to create new token pair", func(t *testing.T) {
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rr)
+
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
+
+		validTokenString := "valid"
+		mockTokenID, _ := uuid.NewRandom()
+		mockUserID, _ := uuid.NewRandom()
+
+		mockRefreshTokenResp := &domain.RefreshToken{
+			SS:  validTokenString,
+			ID:  mockTokenID,
+			UID: mockUserID,
+		}
+
+		mockTokenUseCase.
+			On("ValidateRefreshToken", validTokenString).
+			Return(mockRefreshTokenResp, nil)
+
+		mockUserResp := &domain.User{
+			UID: mockUserID,
+		}
+		getArgs := mock.Arguments{
+			mock.Anything,
+			mockRefreshTokenResp.UID,
+		}
+
+		mockUserUseCase.
+			On("Get", getArgs...).
+			Return(mockUserResp, nil)
+
+		mockError := apperror.NewAuthorization("Invalid refresh token")
+		newPairArgs := mock.Arguments{
+			mock.Anything,
+			mockUserResp,
+			mockRefreshTokenResp.ID.String(),
+		}
+
+		mockTokenUseCase.
+			On("NewPairFromUser", newPairArgs...).
+			Return(nil, mockError)
+
+		// create a request body with invalid fields
+		reqBody, _ := json.Marshal(gin.H{
+			"refreshToken": validTokenString,
+		})
+
+		c.Request = httptest.NewRequest(http.MethodPost, "/tokens", bytes.NewBuffer(reqBody))
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		respBody, _ := json.Marshal(gin.H{
+			"error": mockError,
+		})
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+		h.Tokens(c)
+
+		assert.Equal(t, mockError.Status(), rr.Code)
+		assert.Equal(t, respBody, rr.Body.Bytes())
+		mockTokenUseCase.AssertCalled(t, "ValidateRefreshToken", validTokenString)
+		mockUserUseCase.AssertCalled(t, "Get", getArgs...)
+		mockTokenUseCase.AssertCalled(t, "NewPairFromUser", newPairArgs...)
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rr)
+
+		mockTokenUseCase := new(appmock.MockTokenUseCase)
+		mockUserUseCase := new(appmock.MockUserUseCase)
+
+		validTokenString := "anothervalid"
+		mockTokenID, _ := uuid.NewRandom()
+		mockUserID, _ := uuid.NewRandom()
+
+		mockRefreshTokenResp := &domain.RefreshToken{
+			SS:  validTokenString,
+			ID:  mockTokenID,
+			UID: mockUserID,
+		}
+
+		mockTokenUseCase.
+			On("ValidateRefreshToken", validTokenString).
+			Return(mockRefreshTokenResp, nil)
+
+		mockUserResp := &domain.User{
+			UID: mockUserID,
+		}
+		getArgs := mock.Arguments{
+			mock.Anything,
+			mockRefreshTokenResp.UID,
+		}
+
+		mockUserUseCase.
+			On("Get", getArgs...).
+			Return(mockUserResp, nil)
+
+		mockNewTokenID, _ := uuid.NewRandom()
+		mockNewUserID, _ := uuid.NewRandom()
+		mockTokenPairResp := &domain.TokenPair{
+			IDToken: domain.IDToken{SS: "aNewIDToken"},
+			RefreshToken: domain.RefreshToken{
+				SS:  "aNewRefreshToken",
+				ID:  mockNewTokenID,
+				UID: mockNewUserID,
+			},
+		}
+
+		newPairArgs := mock.Arguments{
+			mock.Anything,
+			mockUserResp,
+			mockRefreshTokenResp.ID.String(),
+		}
+
+		mockTokenUseCase.
+			On("NewPairFromUser", newPairArgs...).
+			Return(mockTokenPairResp, nil)
+
+		// create a request body with invalid fields
+		reqBody, _ := json.Marshal(gin.H{
+			"refreshToken": validTokenString,
+		})
+
+		c.Request = httptest.NewRequest(http.MethodPost, "/tokens", bytes.NewBuffer(reqBody))
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		respBody, _ := json.Marshal(gin.H{
+			"tokens": mockTokenPairResp,
+		})
+
+		h := &UserHandler{
+			UserUseCase:  mockUserUseCase,
+			TokenUseCase: mockTokenUseCase,
+		}
+		h.Tokens(c)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, respBody, rr.Body.Bytes())
+		mockTokenUseCase.AssertCalled(t, "ValidateRefreshToken", validTokenString)
+		mockUserUseCase.AssertCalled(t, "Get", getArgs...)
+		mockTokenUseCase.AssertCalled(t, "NewPairFromUser", newPairArgs...)
+	})
+
+	// TODO - User not found
 }
