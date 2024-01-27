@@ -11,7 +11,7 @@ import (
 func TestHashPassword(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		password := "password123"
-		hashedPassword, err := hashPassword(password)
+		hashedPassword, err := HashPassword(password)
 
 		assert.NoError(t, err)
 
@@ -28,7 +28,7 @@ func TestHashPassword(t *testing.T) {
 
 	t.Run("Empty password", func(t *testing.T) {
 		password := ""
-		hashedPassword, err := hashPassword(password)
+		hashedPassword, err := HashPassword(password)
 
 		assert.NoError(t, err)
 

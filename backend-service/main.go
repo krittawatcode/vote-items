@@ -22,8 +22,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to initialize data sources: %v\n", err)
 	}
-
 	ds.DB.AutoMigrate(&domain.User{}, &domain.VoteSession{}, &domain.VoteItem{}, &domain.Vote{})
+
+	err = ds.SeedUsers()
+	if err != nil {
+		log.Fatalf("Unable to seed users: %v\n", err)
+	}
 
 	rc := new(database.RedisDataSources)
 	err = rc.InitRC()
