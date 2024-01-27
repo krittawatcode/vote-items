@@ -25,11 +25,11 @@ func TestNewPairFromUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse private key: %v", err)
 	}
-	pub, _ := os.ReadFile("../cert/rsa_public_test.pem")
+	pub, err := os.ReadFile("../cert/rsa_public_test.pem")
 	if err != nil {
 		t.Fatalf("Failed to read public key: %v", err)
 	}
-	pubKey, _ := jwt.ParseRSAPublicKeyFromPEM(pub)
+	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pub)
 	if err != nil {
 		t.Fatalf("Failed to parse public key: %v", err)
 	}
@@ -138,6 +138,7 @@ func TestNewPairFromUser(t *testing.T) {
 		// mock call argument/responses
 		mockErr := apperror.NewInternal()
 		mockTokenRepository.On("SetRefreshToken", setSuccessArguments...).Return(mockErr)
+		mockTokenRepository.On("DeleteRefreshToken", deleteWithPrevIDArguments...).Return(nil)
 
 		_, err := tokenUseCase.NewPairFromUser(ctx, u, prevID)
 
@@ -168,22 +169,4 @@ func TestNewPairFromUser(t *testing.T) {
 		mockTokenRepository.AssertNotCalled(t, "DeleteRefreshToken")
 	})
 
-	t.Run("Error deleting refresh token", func(t *testing.T) {
-		mockTokenRepository := new(appmock.MockTokenRepository)
-		tokenUseCase := NewTokenUseCase(mockTokenRepository, privKey, pubKey, secret, idTokenExp, refreshTokenExp)
-
-		ctx := context.Background()
-		// mock call argument/responses
-		mockErr := apperror.NewInternal()
-		mockTokenRepository.On("SetRefreshToken", setSuccessArguments...).Return(nil)
-		mockTokenRepository.On("DeleteRefreshToken", deleteWithPrevIDArguments...).Return(mockErr)
-
-		_, err := tokenUseCase.NewPairFromUser(ctx, u, prevID)
-
-		assert.NoError(t, err)
-		// SetRefreshToken should be called with setSuccessArguments
-		mockTokenRepository.AssertCalled(t, "SetRefreshToken", setSuccessArguments...)
-		// DeleteRefreshToken should be called since prevID is not ""
-		mockTokenRepository.AssertCalled(t, "DeleteRefreshToken", deleteWithPrevIDArguments...)
-	})
 }

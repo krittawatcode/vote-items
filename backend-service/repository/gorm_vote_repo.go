@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
-	"strconv"
 
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/krittawatcode/vote-items/backend-service/domain"
 	"github.com/krittawatcode/vote-items/backend-service/domain/apperror"
 	"github.com/lib/pq"
@@ -57,26 +55,27 @@ func (r *gormVoteRepository) Create(ctx context.Context, v *domain.Vote) error {
 	return nil
 }
 
+// GetVoteResultsBySession retrieves the vote results for a given session ID.
+// It joins the votes and vote_items tables on the vote_item_id field,
+// filters the results by the session ID, groups the results by vote_item_id and vote_items.name,
+// and orders the results by the count of votes in descending order.
+// If no vote results are found for the session ID, it logs the event and returns a not found error.
+// If any other error occurs during the execution of the query, it returns the error.
 func (r *gormVoteRepository) GetVoteResultsBySession(sessionID uint) ([]domain.VoteResult, error) {
 	var voteResults []domain.VoteResult
-	if err := r.Conn.Joins("JOIN vote_items ON votes.vote_item_id = vote_items.id").
-		Where("session_id = ?", sessionID).
-		Order("sum(vote_item_id) desc").
-		Select("votes.*, vote_items.name as vote_item_name").
+	if err := r.Conn.Table("votes").
+		Select("votes.*, vote_items.name as vote_item_name, count(votes.vote_item_id) as vote_count").
+		Joins("JOIN vote_items ON votes.vote_item_id = vote_items.id").
+		Where("votes.session_id = ?", sessionID).
+		Group("votes.vote_item_id, vote_items.name").
+		Order("count(votes.vote_item_id) desc").
 		Find(&voteResults).Error; err != nil {
-		// Log the error
-		log.Printf("Could not get vote results for session ID: %v. Reason: %v\n", sessionID, err)
-
-		// Check for unique constraint violation
-		var pgErr *pgconn.PgError
-		if ok := errors.As(err, &pgErr); ok {
-			log.Printf("Could not get vote results for session ID: %v. Reason: %v\n", sessionID, pgErr.Hint)
-			return nil, apperror.NewConflict("session_id", strconv.Itoa(int(sessionID)))
+		// handle error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("No vote results found for session ID: %v\n", sessionID)
+			return nil, apperror.NewNotFound("vote results", "")
 		}
-
-		// If the error is not a unique constraint violation, return a generic internal server error
-		log.Printf("Could not get vote results for session ID and cannot assert err to pg.Error: %v. Reason: %v\n", sessionID, err)
-		return nil, apperror.NewInternal()
+		return nil, err
 	}
 	return voteResults, nil
 }

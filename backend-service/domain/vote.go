@@ -69,8 +69,9 @@ type Vote struct {
 }
 
 type VoteResult struct {
-	Vote
+	VoteItemID   uint   `json:"vote_item_id"`
 	VoteItemName string `json:"vote_item_name"`
+	VoteCount    uint   `gorm:"column:vote_count"`
 }
 
 type VoteUseCase interface {
