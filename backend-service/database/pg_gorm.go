@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/krittawatcode/vote-items/backend-service/domain"
+	"github.com/krittawatcode/vote-items/backend-service/usecase"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -46,6 +48,28 @@ func (ds *GormDataSources) Close() error {
 
 	if err := sqlDB.Close(); err != nil {
 		return fmt.Errorf("error closing Postgresql: %w", err)
+	}
+
+	return nil
+}
+
+func (ds *GormDataSources) SeedUsers() error {
+	users := []domain.User{
+		{Email: "admin@mtl.co.th", Password: "adminPassword"},
+		{Email: "krittawat@mercy.gg", Password: "userPassword"},
+	}
+
+	for _, user := range users {
+		hashedPassword, err := usecase.HashPassword(user.Password)
+		if err != nil {
+			return err
+		}
+
+		user.Password = hashedPassword
+
+		if err := ds.DB.Create(&user).Error; err != nil {
+			return err
+		}
 	}
 
 	return nil

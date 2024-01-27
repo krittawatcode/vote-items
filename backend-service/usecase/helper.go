@@ -15,7 +15,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
-func hashPassword(password string) (string, error) {
+func HashPassword(password string) (string, error) {
 	// example for making salt - https://play.golang.org/p/_Aw6WeWC42I
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)

@@ -24,7 +24,12 @@ This will route any requests for `krittawatcode.test` to your local machine.
 3. Use the imported collection to test the API endpoints.
 
 ### Startup 
-Run your Docker Compose file with docker-compose up.
+- Run your Docker Compose file with docker-compose up.
+- Call api login with default user
+```
+{Email: "admin@mtl.co.th", Password: "adminPassword"},
+{Email: "krittawat@mercy.gg", Password: "userPassword"},
+```
 
 ## END CREDIT
 it's such a fun run to do this! hope I get the job I want <3

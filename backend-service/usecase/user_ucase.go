@@ -33,7 +33,7 @@ func (s *userUseCase) Get(ctx context.Context, uid uuid.UUID) (*domain.User, err
 // Sign up reaches our to a UserRepository to verify the
 // email address is available and signs up the user if this is the case
 func (s *userUseCase) SignUp(ctx context.Context, u *domain.User) error {
-	pw, err := hashPassword(u.Password)
+	pw, err := HashPassword(u.Password)
 
 	if err != nil {
 		log.Printf("Unable to sign up user for email: %v\n", u.Email)
