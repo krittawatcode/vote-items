@@ -34,21 +34,21 @@ services:
       - "6379:6379"
     volumes:
       - "redisdata:/data"
-  user-service:
+  backend-service:
     build:
-      context: ./user-service
+      context: ./backend-service
       target: builder
-    image: user-service
-    env_file: ./user-service/.env.dev
+    image: backend-service
+    env_file: ./backend-service/.env.dev
     expose:
       - "8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.user-service.rule=Host(`krittawatcode.test`) && PathPrefix(`/api/v1/user-service`)"
+      - "traefik.http.routers.backend-service.rule=Host(`krittawatcode.test`) && PathPrefix(`/api/v1`)"
     environment:
       - ENV=dev
     volumes:
-      - ./user-service:/go/src/app
+      - ./backend-service:/go/src/app
     # have to use $$ (double-dollar) so docker doesn't try to substitute a variable
     depends_on:
       - postgres-vote-items

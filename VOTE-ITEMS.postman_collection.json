@@ -1,0 +1,503 @@
+{
+	"info": {
+		"_postman_id": "c3ccd982-6ca4-492d-a577-7998cb0b6644",
+		"name": "VOTE-ITEMS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "9663241"
+	},
+	"item": [
+		{
+			"name": "user-service",
+			"item": [
+				{
+					"name": "Signup",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@gg.com\",\n    \"password\": \"validpassword123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "krittawatcode.test/api/v1/user/signUp",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"signUp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "krittawatcode.test/api/v1/user/health",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SingIn",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = JSON.parse(responseBody);",
+									"pm.collectionVariables.set(\"idToken\", jsonData.tokens.idToken);",
+									"pm.collectionVariables.set(\"refreshToken\", jsonData.tokens.refreshToken);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test6@gg.com\",\n    \"password\": \"validpassword123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "krittawatcode.test/api/v1/singIn",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"singIn"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Me",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "krittawatcode.test/api/v1/user/me",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = JSON.parse(responseBody);",
+									"pm.collectionVariables.set(\"idToken\", jsonData.tokens.idToken);",
+									"pm.collectionVariables.set(\"refreshToken\", jsonData.tokens.refreshToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "krittawatcode.test/api/v1/user/tokens",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "backend-service",
+			"item": [
+				{
+					"name": "Open vote session",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "krittawatcode.test/api/v1/vote_sessions/1/open",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vote_sessions",
+								"1",
+								"open"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Close vote session",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "krittawatcode.test/api/v1/vote_sessions/1/close",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vote_sessions",
+								"1",
+								"close"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Current vote session",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "krittawatcode.test/api/v1/vote_sessions/open",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vote_sessions",
+								"open"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "all vote item",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "krittawatcode.test/api/v1/vote_items",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vote_items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create vote item",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Vote Item Title 4\",\n    \"description\": \"Description of the vote item\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "krittawatcode.test/api/v1/vote_items/",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vote_items",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update vote item",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Vote Item Title\",\n    \"description\": \"Updated description of the vote item\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "krittawatcode.test/api/v1/vote_items/67692a3c-f8f3-4d96-996e-052c0cd927bd",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vote_items",
+								"67692a3c-f8f3-4d96-996e-052c0cd927bd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Clear Vote Item",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "krittawatcode.test/api/v1/vote_items",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vote_items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vote",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vote_item_id\": \"13cc488a-465d-4f35-b5cc-a31c955b50b3\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "krittawatcode.test/api/v1/votes",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"votes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vote result",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{idToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "krittawatcode.test/api/v1/vote_results/1",
+							"host": [
+								"krittawatcode",
+								"test"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vote_results",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "idToken",
+			"value": ""
+		},
+		{
+			"key": "refreshToken",
+			"value": ""
+		}
+	]
+}
