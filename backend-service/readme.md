@@ -1,15 +1,29 @@
-# User Service API
+# Project Name
 
 ## Introduction
 
-Welcome to the User Service API. This service is designed to manage user data for applications. It provides a set of APIs that allow clients to create, update and retrieve user profiles.
+This project is designed to manage user data for applications. It provides a set of APIs that allow clients to create, update, and retrieve user profiles.
 
-## Features
+## Setup
 
-- **User Management**: APIs for creating, updating, deleting, and retrieving user profiles.
-- **Authentication**: APIs for user authentication, including sign up and sign in.
+### Traefik Setup
 
-### Prerequisites
+1. Open your hosts file:
+   - On Linux or MacOS, the file is `/etc/hosts`.
+   - On Windows, the file is `c:\Windows\System32\Drivers\etc\hosts`.
 
-- Go 1.16 or higher
-- Docker (for running the service in a container)
+2. Add the following line to the file:
+   `` 127.0.0.1 krittawatcode.test``
+This will route any requests for `krittawatcode.test` to your local machine.
+
+
+### Postman Setup
+1. Import the VOTE-ITEMS.postman_collection.json file into Postman.
+2. Set up your environment variables in Postman as needed.
+3. Use the imported collection to test the API endpoints.
+
+### Startup 
+Run your Docker Compose file with docker-compose up.
+
+## END CREDIT
+it's such a fun run to do this! hope I get the job I want <3
