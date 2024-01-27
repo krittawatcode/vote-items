@@ -175,13 +175,13 @@ func validateRefreshToken(tokenString string, key string) (*refreshTokenCustomCl
 	}
 
 	if !token.Valid {
-		return nil, fmt.Errorf("Refresh token is invalid")
+		return nil, fmt.Errorf("refresh token is invalid")
 	}
 
 	claims, ok := token.Claims.(*refreshTokenCustomClaims)
 
 	if !ok {
-		return nil, fmt.Errorf("Refresh token valid but couldn't parse claims")
+		return nil, fmt.Errorf("refresh token valid but couldn't parse claims")
 	}
 
 	return claims, nil

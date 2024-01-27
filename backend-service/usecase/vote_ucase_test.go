@@ -18,7 +18,7 @@ func TestVoteUsecase(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		mockVote := &domain.Vote{
 			SessionID: uint(uuid.New().ID()),
-			UserID:    uint(uuid.New().ID()),
+			UserID:    uuid.New(),
 		}
 
 		mockVoteRepo.On("Create", mock.Anything, mockVote).Return(nil)

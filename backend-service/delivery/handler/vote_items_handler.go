@@ -41,11 +41,6 @@ func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, vu doma
 		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
 	}
 
-	// Add a health check endpoint
-	g.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "vote items handler work!"})
-	})
-
 	if gin.Mode() != gin.TestMode {
 		// set up middle ware for time out
 		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
@@ -225,6 +220,13 @@ func (h *VoteItemsHandler) CastVote(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": apperror.NewBadRequest(err.Error())})
 		return
 	}
+
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+		return
+	}
+	vote.UserID = user.(*domain.User).UID
 
 	err := h.VoteUseCase.Create(c.Request.Context(), &vote)
 	if err != nil {

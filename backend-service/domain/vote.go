@@ -9,8 +9,8 @@ import (
 )
 
 type VoteSession struct {
-	ID        int32 `db:"id" json:"id"`
-	IsOpen    bool  `gorm:"type:boolean;not null;default:true" json:"is_open"`
+	ID        uint `db:"id" json:"id"`
+	IsOpen    bool `gorm:"type:boolean;not null;default:true" json:"is_open"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
@@ -63,8 +63,8 @@ type VoteItemRepository interface {
 type Vote struct {
 	BaseModel
 	ID         uuid.UUID `db:"id" json:"id" gorm:"type:uuid;default:uuid_generate_v4()"`
-	UserID     uint      `gorm:"not null" json:"user_id"`
-	VoteItemID uint      `gorm:"not null" json:"vote_item_id"`
+	UserID     uuid.UUID `gorm:"not null" json:"user_id"`
+	VoteItemID uuid.UUID `gorm:"not null" json:"vote_item_id"`
 	SessionID  uint      `gorm:"not null" json:"session_id"`
 }
 

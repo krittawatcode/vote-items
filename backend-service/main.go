@@ -23,7 +23,7 @@ func main() {
 		log.Fatalf("Unable to initialize data sources: %v\n", err)
 	}
 
-	ds.DB.AutoMigrate(&domain.User{}, &domain.VoteSession{}, &domain.VoteItem{})
+	ds.DB.AutoMigrate(&domain.User{}, &domain.VoteSession{}, &domain.VoteItem{}, &domain.Vote{})
 
 	rc := new(database.RedisDataSources)
 	err = rc.InitRC()

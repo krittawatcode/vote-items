@@ -12,7 +12,7 @@ import (
 )
 
 type gormVoteRepository struct {
-	Conn *gorm.DB
+	conn *gorm.DB
 }
 
 func NewGormVoteRepository(conn *gorm.DB) domain.VoteRepository {
@@ -21,37 +21,39 @@ func NewGormVoteRepository(conn *gorm.DB) domain.VoteRepository {
 
 // Create is a method that creates a new vote in the database.
 func (r *gormVoteRepository) Create(ctx context.Context, v *domain.Vote) error {
+	// log request data
+	log.Printf("Creating vote : %v\n", v)
 	// check if current session is open or not
 	var voteSession domain.VoteSession
-	if err := r.Conn.Where("is_open = ?", true).First(&voteSession).Error; err != nil {
+	if err := r.conn.Where("is_open = ?", true).First(&voteSession).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Printf("No open vote session found: %v\n", err)
-			return apperror.NewNotFound("open vote session", "")
+			return apperror.NewNotFound("vote session", "OPEN")
 		}
 		log.Printf("Error finding open vote session: %v\n", err)
 		return apperror.NewInternal()
 	}
 
-	var vote domain.Vote
-	if err := r.Conn.Where("user_id = ? AND session_id = ?", v.UserID, v.SessionID).First(&vote).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// If no record found, create a new vote
-			if err := r.Conn.Create(v).Error; err != nil {
-				if pgErr, ok := err.(*pq.Error); ok {
-					// Handle the postgres error here
-					log.Printf("Postgres error creating vote: %v\n", pgErr)
-					return apperror.NewConflict(pgErr.Message, pgErr.Hint)
-				}
-				log.Printf("Error creating vote: %v\n", err)
-				return apperror.NewInternal()
-			}
-			log.Printf("Vote created successfully for user ID: %v and session ID: %v\n", v.UserID, v.SessionID)
-			return nil
-		}
-		// If a record is found, it means the user has already voted in this session
-		log.Printf("User with ID: %v has already voted in session ID: %v\n", v.UserID, v.SessionID)
-		return apperror.NewConflict("User has already voted in this session", "")
+	v.SessionID = voteSession.ID
+
+	// Check if the user has already voted for an item in this session
+	var existingVote domain.Vote
+	if err := r.conn.Where("user_id = ? AND session_id = ?", v.UserID, voteSession.ID).First(&existingVote).Error; !errors.Is(err, gorm.ErrRecordNotFound) {
+		log.Printf("User with ID: %v has already voted for an item in session ID: %v\n", v.UserID, v.SessionID)
+		return apperror.NewConflict("User has already voted for an item in this session", string(existingVote.VoteItemID.String()))
 	}
+
+	// Create a new vote
+	if err := r.conn.Create(v).Error; err != nil {
+		if pgErr, ok := err.(*pq.Error); ok {
+			// Handle the postgres error here
+			log.Printf("Postgres error creating vote: %v\n", pgErr)
+			return apperror.NewConflict(pgErr.Message, pgErr.Hint)
+		}
+		log.Printf("Error creating vote: %v\n", err)
+		return apperror.NewInternal()
+	}
+	log.Printf("Vote created successfully for user ID: %v and session ID: %v\n", v.UserID, v.SessionID)
 	return nil
 }
 
@@ -63,7 +65,7 @@ func (r *gormVoteRepository) Create(ctx context.Context, v *domain.Vote) error {
 // If any other error occurs during the execution of the query, it returns the error.
 func (r *gormVoteRepository) GetVoteResultsBySession(sessionID uint) ([]domain.VoteResult, error) {
 	var voteResults []domain.VoteResult
-	if err := r.Conn.Table("votes").
+	if err := r.conn.Table("votes").
 		Select("votes.*, vote_items.name as vote_item_name, count(votes.vote_item_id) as vote_count").
 		Joins("JOIN vote_items ON votes.vote_item_id = vote_items.id").
 		Where("votes.session_id = ?", sessionID).

@@ -28,6 +28,19 @@ func (r *gormVoteItemRepository) FetchActive(ctx context.Context) (*[]domain.Vot
 }
 
 func (r *gormVoteItemRepository) Create(ctx context.Context, v *domain.VoteItem) error {
+	// check if current session is open or not
+	var voteSession domain.VoteSession
+	if err := r.conn.Where("is_open = ?", true).First(&voteSession).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("No open vote session found: %v\n", err)
+			return apperror.NewNotFound("open vote session", "")
+		}
+		log.Printf("Error finding open vote session: %v\n", err)
+		return apperror.NewInternal()
+	}
+
+	v.SessionID = voteSession.ID
+	log.Printf("Create vote item with data: %v\n", v)
 	result := r.conn.Create(v)
 	if result.Error != nil {
 		// Log the error

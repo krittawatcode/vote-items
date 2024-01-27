@@ -103,7 +103,7 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	/*
 	 * setup vote item handler
 	 */
-	handler.NewVoteItemsHandler(router, voteItemUseCase, voteUseCase, voteSessionUseCase, tokenUseCase, baseURL+"/vote_items", time.Duration(time.Duration(ht)*time.Second))
+	handler.NewVoteItemsHandler(router, voteItemUseCase, voteUseCase, voteSessionUseCase, tokenUseCase, baseURL, time.Duration(time.Duration(ht)*time.Second))
 
 	return router, nil
 }

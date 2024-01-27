@@ -37,7 +37,7 @@ func (r *gormVoteSessionRepository) GetOpenVoteSession() (*domain.VoteSession, e
 
 func (r *gormVoteSessionRepository) CreateVoteSession(id uint) error {
 	voteSession := domain.VoteSession{
-		ID:     int32(id),
+		ID:     id,
 		IsOpen: true,
 	}
 	if err := r.conn.Create(&voteSession).Error; err != nil {
@@ -58,7 +58,7 @@ func (r *gormVoteSessionRepository) CreateVoteSession(id uint) error {
 func (r *gormVoteSessionRepository) CloseVoteSession(id uint) error {
 	// Create a VoteSession object with the provided ID and IsOpen set to false
 	voteSession := domain.VoteSession{
-		ID:     int32(id),
+		ID:     id,
 		IsOpen: false,
 	}
 

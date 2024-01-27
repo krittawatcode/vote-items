@@ -55,7 +55,7 @@ func TestVoteSessionUsecase(t *testing.T) {
 	t.Run("GetVoteSessionByID", func(t *testing.T) {
 		id := uint(1)
 		mockVoteSession := &domain.VoteSession{
-			ID: int32(id),
+			ID: id,
 		}
 
 		mockVoteSessionRepo.On("GetVoteSessionByID", mock.Anything, id).Return(mockVoteSession, nil)
