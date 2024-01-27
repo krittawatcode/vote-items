@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 
 	"github.com/krittawatcode/vote-items/backend-service/domain"
@@ -43,4 +44,13 @@ func (u *VoteSessionUsecase) CloseVoteSession(id uint) error {
 		return errors.New("failed to close vote session: " + err.Error())
 	}
 	return nil
+}
+
+func (u *VoteSessionUsecase) GetVoteSessionByID(ctx context.Context, id uint) (*domain.VoteSession, error) {
+	voteSession, err := u.VoteSessionRepository.GetVoteSessionByID(ctx, id)
+	if err != nil {
+		return voteSession, err
+	}
+
+	return voteSession, nil
 }

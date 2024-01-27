@@ -19,16 +19,18 @@ type VoteItemsHandler struct {
 	Router             *gin.Engine
 	VoteItemUseCase    domain.VoteItemUseCase
 	VoteSessionUseCase domain.VoteSessionUseCase
+	VoteUseCase        domain.VoteUseCase
 	TokenUseCase       domain.TokenUseCase
 	BaseUrl            string // base url for user routes
 	TimeoutDuration    time.Duration
 }
 
 // Does not return as it deals directly with a reference to the gin Engine
-func NewVoteItemsHandler(router *gin.Engine, vu domain.VoteItemUseCase, vsu domain.VoteSessionUseCase, tu domain.TokenUseCase, baseUrl string, timeout time.Duration) {
+func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, vu domain.VoteUseCase, vsu domain.VoteSessionUseCase, tu domain.TokenUseCase, baseUrl string, timeout time.Duration) {
 	h := &VoteItemsHandler{
-		VoteItemUseCase:    vu,
+		VoteItemUseCase:    viu,
 		VoteSessionUseCase: vsu,
+		VoteUseCase:        vu,
 		TokenUseCase:       tu,
 	}
 
@@ -63,26 +65,12 @@ func NewVoteItemsHandler(router *gin.Engine, vu domain.VoteItemUseCase, vsu doma
 		g.DELETE("/vote_items/:id", middleware.AuthUser(h.TokenUseCase), h.DeleteVoteItem)
 		// clear all vote items
 		g.DELETE("/vote_items", middleware.AuthUser(h.TokenUseCase), h.ClearVoteItem)
+		// cast a vote
+		g.POST("/votes", middleware.AuthUser(h.TokenUseCase), h.CastVote)
+		// get vote results by session id
+		g.GET("/vote_results/:session_id", middleware.AuthUser(h.TokenUseCase), h.GetVoteResultsBySession)
 	}
 }
-
-/* TODO:
-CRUD API for vote item resource:
-
-
-API for clear vote item & result:
-
-DELETE /api/v1/vote_items: Clear all vote items and results
-
-API for returning vote result order by vote count:
-GET /api/v1/vote_results: Get vote results ordered by vote count
-
-API for vote:
-POST /api/v1/votes: Cast a vote
-
-API for export report:
-GET /api/v1/reports: Export a report
-*/
 
 // GET /api/v1/vote_items: Get all active vote items
 func (h *VoteItemsHandler) OpenVoteSession(c *gin.Context) {
@@ -228,4 +216,39 @@ func (h *VoteItemsHandler) ClearVoteItem(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "success"})
+}
+
+// POST /api/v1/votes: Cast a vote
+func (h *VoteItemsHandler) CastVote(c *gin.Context) {
+	var vote domain.Vote
+	if err := c.ShouldBindJSON(&vote); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": apperror.NewBadRequest(err.Error())})
+		return
+	}
+
+	err := h.VoteUseCase.Create(c.Request.Context(), &vote)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, vote)
+}
+
+// GET /api/v1/vote_results/{session_id}: Get vote results by session id
+func (h *VoteItemsHandler) GetVoteResultsBySession(c *gin.Context) {
+	sessionIDStr := c.Param("session_id")
+	sessionID, err := strconv.ParseUint(sessionIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session ID"})
+		return
+	}
+
+	voteResults, err := h.VoteUseCase.GetVoteResultsBySession(uint(sessionID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, voteResults)
 }

@@ -21,12 +21,13 @@ type VoteSessionUseCase interface {
 	GetOpenVoteSession() (*VoteSession, error)
 	OpenVoteSession(id uint) error
 	CloseVoteSession(id uint) error
+	GetVoteSessionByID(ctx context.Context, id uint) (*VoteSession, error)
 }
-
 type VoteSessionRepository interface {
 	GetOpenVoteSession() (*VoteSession, error)
 	CreateVoteSession(id uint) error
 	CloseVoteSession(id uint) error
+	GetVoteSessionByID(ctx context.Context, id uint) (*VoteSession, error)
 }
 
 type VoteItem struct {
@@ -65,4 +66,19 @@ type Vote struct {
 	UserID     uint      `gorm:"not null" json:"user_id"`
 	VoteItemID uint      `gorm:"not null" json:"vote_item_id"`
 	SessionID  uint      `gorm:"not null" json:"session_id"`
+}
+
+type VoteResult struct {
+	Vote
+	VoteItemName string `json:"vote_item_name"`
+}
+
+type VoteUseCase interface {
+	Create(ctx context.Context, v *Vote) error
+	GetVoteResultsBySession(sessionID uint) ([]VoteResult, error)
+}
+
+type VoteRepository interface {
+	Create(ctx context.Context, v *Vote) error
+	GetVoteResultsBySession(sessionID uint) ([]VoteResult, error)
 }

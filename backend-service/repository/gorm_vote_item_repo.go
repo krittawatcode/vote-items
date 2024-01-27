@@ -2,7 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"log"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/krittawatcode/vote-items/backend-service/domain"
 	"github.com/krittawatcode/vote-items/backend-service/domain/apperror"
 	"gorm.io/gorm"
@@ -27,7 +30,19 @@ func (r *gormVoteItemRepository) FetchActive(ctx context.Context) (*[]domain.Vot
 func (r *gormVoteItemRepository) Create(ctx context.Context, v *domain.VoteItem) error {
 	result := r.conn.Create(v)
 	if result.Error != nil {
-		return result.Error
+		// Log the error
+		log.Printf("Could not create a vote item with ID: %v. Reason: %v\n", v.ID, result.Error)
+
+		// Check for unique constraint violation
+		var pgErr *pgconn.PgError
+		if ok := errors.As(result.Error, &pgErr); ok {
+			log.Printf("Could not create a vote item with ID: %v. Reason: %v\n", v.ID, pgErr.Hint)
+			return apperror.NewConflict("id", v.ID.String())
+		}
+
+		// If the error is not a unique constraint violation, return a generic internal server error
+		log.Printf("Could not create a vote item with ID and cannot assert err to pg.Error: %v. Reason: %v\n", v.ID, result.Error)
+		return apperror.NewInternal()
 	}
 	return nil
 }
@@ -54,5 +69,21 @@ func (r *gormVoteItemRepository) SetActiveVoteItem(ctx context.Context, v *domai
 
 // will set all voteItem to inactive
 func (r *gormVoteItemRepository) ClearVoteItem(ctx context.Context) error {
-	return r.conn.Model(&domain.VoteItem{}).Where("is_active = ?", true).Update("is_active", false).Error
+	result := r.conn.Model(&domain.VoteItem{}).Where("is_active = ?", true).Update("is_active", false)
+	if result.Error != nil {
+		// Log the error
+		log.Printf("Could not clear vote items. Reason: %v\n", result.Error)
+
+		// Check for unique constraint violation
+		var pgErr *pgconn.PgError
+		if ok := errors.As(result.Error, &pgErr); ok {
+			log.Printf("Could not clear vote items. Reason: %v\n", pgErr.Hint)
+			return apperror.NewConflict("id", "ClearVoteItem conflict")
+		}
+
+		// If the error is not a unique constraint violation, return a generic internal server error
+		log.Printf("Could not clear vote items and cannot assert err to pg.Error: %v. Reason: %v\n", "ClearVoteItem", result.Error)
+		return apperror.NewInternal()
+	}
+	return nil
 }

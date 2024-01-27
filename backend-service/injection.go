@@ -29,12 +29,14 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	tokenRepository := repository.NewTokenRepository(r.RedisClient)
 	voteSessionRepository := repository.NewGormVoteSessionRepository(d.DB)
 	voteItemRepository := repository.NewGormVoteItemRepository(d.DB)
+	voteRepository := repository.NewGormVoteRepository(d.DB)
 	/*
 	 * usecase layer
 	 */
 	userUseCase := usecase.NewUserUseCase(userRepository)
 	voteSessionUseCase := usecase.NewVoteSessionUsecase(voteSessionRepository)
 	voteItemUseCase := usecase.NewVoteItemUsecase(voteItemRepository)
+	voteUseCase := usecase.NewVoteUsecase(voteRepository)
 
 	// load rsa keys
 	privKeyFile := os.Getenv("PRIV_KEY_FILE")
@@ -101,8 +103,7 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	/*
 	 * setup vote item handler
 	 */
-
-	handler.NewVoteItemsHandler(router, voteItemUseCase, voteSessionUseCase, tokenUseCase, baseURL, time.Duration(time.Duration(ht)*time.Second))
+	handler.NewVoteItemsHandler(router, voteItemUseCase, voteUseCase, voteSessionUseCase, tokenUseCase, baseURL+"/vote_items", time.Duration(time.Duration(ht)*time.Second))
 
 	return router, nil
 }
