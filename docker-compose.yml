@@ -16,19 +16,44 @@ services:
     volumes:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
-  vote-items-backend:
+  postgres-vote-items:
+    image: "postgres:alpine"
+    environment:
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    #   Set a volume for data and initial sql script
+    #   May configure initial db for future demo
+    volumes:
+      - "pgdata_vote_items:/var/lib/postgresql/data"
+      # - ./init:/docker-entrypoint-initdb.d/
+    command: [ "postgres", "-c", "log_statement=all" ]
+  redis-vote-items:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    volumes:
+      - "redisdata:/data"
+  backend-service:
     build:
-      context: ./vote-items-backend
+      context: ./backend-service
       target: builder
-    image: vote-items-backend
+    image: backend-service
+    env_file: ./backend-service/.env.dev
     expose:
       - "8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vote-items-backend.rule=Host(`krittawatcode.test`) && PathPrefix(`/api/v1/vote-items`)"
+      - "traefik.http.routers.backend-service.rule=Host(`krittawatcode.test`) && PathPrefix(`/api/v1`)"
     environment:
       - ENV=dev
     volumes:
-      - ./vote-items-backend:/go/src/app
+      - ./backend-service:/go/src/app
     # have to use $$ (double-dollar) so docker doesn't try to substitute a variable
+    depends_on:
+      - postgres-vote-items
+      - redis-vote-items
     command: reflex -r "\.go$$" -s -- sh -c "go run ./"
+volumes:
+  pgdata_vote_items:
+  redisdata:

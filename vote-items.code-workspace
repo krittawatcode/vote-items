@@ -1,7 +1,7 @@
 {
     "folders": [
         {
-            "path": "./vote-items-backend"
+            "path": "./backend-service"
         },
         {
             "path": "."

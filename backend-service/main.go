@@ -9,19 +9,32 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/krittawatcode/vote-items/backend-service/database"
+	"github.com/krittawatcode/vote-items/backend-service/domain"
 )
 
 func main() {
 	log.Println("Starting server...")
 
-	router := gin.Default()
+	// initialize data sources
+	ds := new(database.GormDataSources)
+	err := ds.InitDS()
+	if err != nil {
+		log.Fatalf("Unable to initialize data sources: %v\n", err)
+	}
 
-	router.GET("/api/v1/vote-items/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
-	})
+	ds.DB.AutoMigrate(&domain.User{}, &domain.VoteSession{}, &domain.VoteItem{}, &domain.Vote{})
+
+	rc := new(database.RedisDataSources)
+	err = rc.InitRC()
+	if err != nil {
+		log.Fatalf("Unable to initialize data sources: %v\n", err)
+	}
+
+	router, err := inject(ds, rc)
+	if err != nil {
+		log.Fatalf("Unable to inject data sources: %v\n", err)
+	}
 
 	srv := &http.Server{
 		Addr:    ":8080",
@@ -49,6 +62,11 @@ func main() {
 	// the request it is currently handling
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	// shutdown data sources
+	if err := ds.Close(); err != nil {
+		log.Fatalf("A problem occurred gracefully shutting down data sources: %v\n", err)
+	}
 
 	// Shutdown server
 	log.Println("Shutting down server...")
