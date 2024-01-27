@@ -57,27 +57,28 @@ func (r *gormVoteRepository) Create(ctx context.Context, v *domain.Vote) error {
 	return nil
 }
 
-// GetVoteResultsBySession retrieves the vote results for a given session ID.
-// It joins the votes and vote_items tables on the vote_item_id field,
-// filters the results by the session ID, groups the results by vote_item_id and vote_items.name,
-// and orders the results by the count of votes in descending order.
-// If no vote results are found for the session ID, it logs the event and returns a not found error.
-// If any other error occurs during the execution of the query, it returns the error.
 func (r *gormVoteRepository) GetVoteResultsBySession(sessionID uint) ([]domain.VoteResult, error) {
-	var voteResults []domain.VoteResult
-	if err := r.conn.Table("votes").
-		Select("votes.*, vote_items.name as vote_item_name, count(votes.vote_item_id) as vote_count").
+	var results []domain.VoteResult
+
+	// Join votes and vote_items tables, filter by session ID, group by vote_item_id and vote_items.name, and order by vote count
+	err := r.conn.Table("votes").
+		Select("vote_items.id as vote_item_id, vote_items.name as vote_item_name, COUNT(votes.id) as vote_count").
 		Joins("JOIN vote_items ON votes.vote_item_id = vote_items.id").
 		Where("votes.session_id = ?", sessionID).
-		Group("votes.vote_item_id, vote_items.name").
-		Order("count(votes.vote_item_id) desc").
-		Find(&voteResults).Error; err != nil {
-		// handle error
+		Group("vote_items.id, vote_items.name").
+		Order("vote_count DESC").
+		Scan(&results).Error
+
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Log the event and return a not found error if no vote results are found
 			log.Printf("No vote results found for session ID: %v\n", sessionID)
 			return nil, apperror.NewNotFound("vote results", "")
 		}
-		return nil, err
+		// Return the error if any other error occurs during the execution of the query
+		log.Printf("Error retrieving vote results: %v\n", err)
+		return nil, apperror.NewInternal()
 	}
-	return voteResults, nil
+
+	return results, nil
 }

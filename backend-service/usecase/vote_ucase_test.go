@@ -34,11 +34,11 @@ func TestVoteUsecase(t *testing.T) {
 
 		mockVoteResults := []domain.VoteResult{
 			{
-				VoteItemID: 1,
+				VoteItemID: uuid.New(),
 				VoteCount:  10,
 			},
 			{
-				VoteItemID: 2,
+				VoteItemID: uuid.New(),
 				VoteCount:  5,
 			},
 		}

@@ -64,14 +64,14 @@ type Vote struct {
 	BaseModel
 	ID         uuid.UUID `db:"id" json:"id" gorm:"type:uuid;default:uuid_generate_v4()"`
 	UserID     uuid.UUID `gorm:"not null" json:"user_id"`
-	VoteItemID uuid.UUID `gorm:"not null" json:"vote_item_id"`
+	VoteItemID uuid.UUID `gorm:"type:uuid;not null" json:"vote_item_id"`
 	SessionID  uint      `gorm:"not null" json:"session_id"`
 }
 
 type VoteResult struct {
-	VoteItemID   uint   `json:"vote_item_id"`
-	VoteItemName string `json:"vote_item_name"`
-	VoteCount    uint   `gorm:"column:vote_count"`
+	VoteItemID   uuid.UUID `json:"vote_item_id"`
+	VoteItemName string    `json:"vote_item_name"`
+	VoteCount    uint      `json:"vote_count" gorm:"column:vote_count"`
 }
 
 type VoteUseCase interface {
