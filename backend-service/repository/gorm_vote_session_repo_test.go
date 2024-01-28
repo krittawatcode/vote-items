@@ -11,15 +11,34 @@ import (
 )
 
 func TestGormVoteSessionRepository(t *testing.T) {
-	mockDb, mock, _ := sqlmock.New()
-	dialector := postgres.New(postgres.Config{
-		Conn:       mockDb,
-		DriverName: "postgres",
+
+	t.Run("CreateVoteSession", func(t *testing.T) {
+		mockDb, mock, _ := sqlmock.New()
+		dialector := postgres.New(postgres.Config{
+			Conn:       mockDb,
+			DriverName: "postgres",
+		})
+
+		db, _ := gorm.Open(dialector, &gorm.Config{})
+		repo := NewGormVoteSessionRepository(db)
+		id := uint(1)
+
+		mock.ExpectExec("INSERT INTO").WithArgs(id, true).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := repo.CreateVoteSession(id)
+
+		assert.NoError(t, err)
 	})
-	db, _ := gorm.Open(dialector, &gorm.Config{})
-	repo := NewGormVoteSessionRepository(db)
 
 	t.Run("GetOpenVoteSession", func(t *testing.T) {
+		mockDb, mock, _ := sqlmock.New()
+		dialector := postgres.New(postgres.Config{
+			Conn:       mockDb,
+			DriverName: "postgres",
+		})
+
+		db, _ := gorm.Open(dialector, &gorm.Config{})
+		repo := NewGormVoteSessionRepository(db)
 		rows := sqlmock.NewRows([]string{"id", "is_open"}).
 			AddRow(1, true)
 
@@ -32,19 +51,17 @@ func TestGormVoteSessionRepository(t *testing.T) {
 		assert.Equal(t, true, voteSession.IsOpen)
 	})
 
-	t.Run("CreateVoteSession", func(t *testing.T) {
-		id := uint(1)
-
-		mock.ExpectExec("INSERT INTO").WithArgs(id, true).WillReturnResult(sqlmock.NewResult(1, 1))
-
-		err := repo.CreateVoteSession(id)
-
-		assert.NoError(t, err)
-	})
-
 	// TODO: CloseVoteSession
 
 	t.Run("GetVoteSessionByID", func(t *testing.T) {
+		mockDb, mock, _ := sqlmock.New()
+		dialector := postgres.New(postgres.Config{
+			Conn:       mockDb,
+			DriverName: "postgres",
+		})
+
+		db, _ := gorm.Open(dialector, &gorm.Config{})
+		repo := NewGormVoteSessionRepository(db)
 		id := uint(1)
 
 		rows := sqlmock.NewRows([]string{"id", "is_open"}).
