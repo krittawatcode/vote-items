@@ -31,7 +31,7 @@ type VoteSessionRepository interface {
 }
 
 type VoteItem struct {
-	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4()" json:"id"`
+	ID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid()" json:"id"`
 	Name        string    `gorm:"type:varchar(255);not null" binding:"required" json:"name"`
 	Description string    `gorm:"type:text" binding:"required" json:"description"`
 	VoteCount   int       `gorm:"type:int;default:0" json:"vote_count"`
@@ -62,14 +62,14 @@ type VoteItemRepository interface {
 
 type Vote struct {
 	BaseModel
-	ID         uuid.UUID `db:"id" json:"id" gorm:"type:uuid;default:uuid_generate_v4()"`
+	ID         uuid.UUID `db:"id" json:"id" gorm:"type:uuid;default:gen_random_uuid()"`
 	UserID     uuid.UUID `gorm:"not null" json:"user_id"`
 	VoteItemID uuid.UUID `gorm:"type:uuid;not null" json:"vote_item_id"`
 	SessionID  uint      `gorm:"not null" json:"session_id"`
 }
 
 type VoteResult struct {
-	VoteItemID   uuid.UUID `json:"vote_item_id"`
+	VoteItemID   uuid.UUID `json:"vote_item_id" gorm:"type:uuid;default:gen_random_uuid()`
 	VoteItemName string    `json:"vote_item_name"`
 	VoteCount    uint      `json:"vote_count" gorm:"column:vote_count"`
 }
