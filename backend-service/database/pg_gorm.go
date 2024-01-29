@@ -1,9 +1,11 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/krittawatcode/vote-items/backend-service/domain"
 	"github.com/krittawatcode/vote-items/backend-service/usecase"
@@ -53,6 +55,8 @@ func (ds *GormDataSources) Close() error {
 	return nil
 }
 
+var mu sync.Mutex
+
 func (ds *GormDataSources) SeedUsers() error {
 	users := []domain.User{
 		{Email: "admin@mtl.co.th", Password: "adminPassword"},
@@ -67,9 +71,27 @@ func (ds *GormDataSources) SeedUsers() error {
 
 		user.Password = hashedPassword
 
+		mu.Lock()
+		// Check if the user already exists
+		var existingUser domain.User
+		if err := ds.DB.Where("email = ?", user.Email).First(&existingUser).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				// If the error is not a RecordNotFound error, return the error
+				mu.Unlock()
+				return err
+			}
+		} else {
+			// If no error occurred, the user already exists, so skip to the next user
+			mu.Unlock()
+			continue
+		}
+
+		// If the user does not exist, create the user
 		if err := ds.DB.Create(&user).Error; err != nil {
+			mu.Unlock()
 			return err
 		}
+		mu.Unlock()
 	}
 
 	return nil
