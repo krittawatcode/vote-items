@@ -8,15 +8,10 @@ import (
 
 // User defines domain model and its json and db representations
 type User struct {
-	UID      uuid.UUID `db:"uid" json:"uid" gorm:"type:uuid;default:uuid_generate_v4()"`
-	Email    string    `db:"email" json:"email"`
+	UID      uuid.UUID `db:"uid" json:"uid" gorm:"type:uuid;default:gen_random_uuid()"`
+	Email    string    `gorm:"unique"`
 	Password string    `db:"password" json:"-"` // never return password
 	BaseModel
-}
-
-// TableName use to specific table
-func (u *User) TableName() string {
-	return "users"
 }
 
 // UserUseCase defines methods the handler layer expects
