@@ -89,7 +89,7 @@
 							}
 						},
 						"url": {
-							"raw": "krittawatcode.test/api/v1/singIn",
+							"raw": "krittawatcode.test/api/v1/user/singIn",
 							"host": [
 								"krittawatcode",
 								"test"

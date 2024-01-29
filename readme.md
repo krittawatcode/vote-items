@@ -30,6 +30,11 @@ This will route any requests for `krittawatcode.test` to your local machine.
 {Email: "admin@mtl.co.th", Password: "adminPassword"},
 {Email: "krittawat@mercy.gg", Password: "userPassword"},
 ```
+## NOTE
+- for user API: prefix with /user
+   ex. krittawatcode.test/api/v1/user/singIn
+- for vote item API: prefix with /vote-items
+   ex. krittawatcode.test/api/v1/vote_sessions/1/open
 
 ## END CREDIT
 it's such a fun run to do this! hope I get the job I want <3
