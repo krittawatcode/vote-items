@@ -14,7 +14,7 @@ You can find my written about the design of this application on my [Medium](http
    - On Linux or MacOS, the file is `/etc/hosts`.
    - On Windows, the file is `c:\Windows\System32\Drivers\etc\hosts`.
 
-2.  Add the following line to the file: `127.0.0.1 krittawatcod.test`
+2.  Add the following line to the file: `127.0.0.1 krittawatcode.test`
 This will route any requests for `krittawatcode.test` to your local machine.
 
 
