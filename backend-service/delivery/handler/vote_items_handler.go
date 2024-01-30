@@ -146,7 +146,7 @@ func (h *VoteItemsHandler) CreateVoteItem(c *gin.Context) {
 	c.JSON(http.StatusCreated, voteItem)
 }
 
-// PUT /api/v1/vote_items/{id}:
+// PUT /api/v1/vote_items/{id}: Update item
 func (h *VoteItemsHandler) UpdateVoteItem(c *gin.Context) {
 	id := c.Param("id")
 	log.Printf("Received id: %v", id)
