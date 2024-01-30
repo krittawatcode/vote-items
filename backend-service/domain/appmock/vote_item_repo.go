@@ -18,6 +18,7 @@ func (m *MockVoteItemRepository) FetchActive(ctx context.Context) (*[]domain.Vot
 
 	var r0 *[]domain.VoteItem
 	if ret.Get(0) != nil {
+		// Ensure you're asserting to the correct type (*[]domain.VoteItem)
 		r0 = ret.Get(0).(*[]domain.VoteItem)
 	}
 
