@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
 	"log"
 	"net/http"
 	"strconv"
@@ -63,6 +65,8 @@ func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, vu doma
 		// cast a vote
 		g.POST("/votes", middleware.AuthUser(h.TokenUseCase), h.CastVote)
 		// get vote results by session id
+		// GET /api/v1/vote_results/{session_id}: Get vote results by session id
+		// GET /api/v1/vote_results/{session_id}?format=csv: Get vote results by session id in CSV format
 		g.GET("/vote_results/:session_id", middleware.AuthUser(h.TokenUseCase), h.GetVoteResultsBySession)
 	}
 }
@@ -238,6 +242,7 @@ func (h *VoteItemsHandler) CastVote(c *gin.Context) {
 }
 
 // GET /api/v1/vote_results/{session_id}: Get vote results by session id
+// GET /api/v1/vote_results/{session_id}?format=csv: Get vote results by session id in CSV format
 func (h *VoteItemsHandler) GetVoteResultsBySession(c *gin.Context) {
 	sessionIDStr := c.Param("session_id")
 	sessionID, err := strconv.ParseUint(sessionIDStr, 10, 32)
@@ -252,5 +257,51 @@ func (h *VoteItemsHandler) GetVoteResultsBySession(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, voteResults)
+	format := c.DefaultQuery("format", "json")
+	if format == "csv" {
+		// Create a CSV writer writing to the HTTP response
+		c.Writer.Header().Set("Content-Type", "text/csv")
+		c.Writer.Header().Set("Content-Disposition", "attachment;filename=vote_results.csv")
+		buf := &bytes.Buffer{}
+		writer := csv.NewWriter(buf)
+
+		// Write the header
+		err = writer.Write([]string{"ID", "Description", "Name", "VoteCount", "SessionID", "IsActive"})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Write the data
+		for _, voteItem := range voteResults {
+			record := []string{
+				voteItem.VoteItemID.String(),
+				voteItem.VoteItemName,
+				strconv.Itoa(int(voteItem.VoteCount)),
+			}
+			err = writer.Write(record)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
+
+		writer.Flush()
+		if err = writer.Error(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write CSV data"})
+			return
+		}
+
+		// Set the necessary headers to instruct the browser to download the file
+		c.Header("Content-Description", "File Transfer")
+		c.Header("Content-Transfer-Encoding", "binary")
+		c.Header("Content-Disposition", "attachment; filename=vote_results.csv")
+		c.Header("Content-Type", "application/octet-stream")
+
+		// Write the buffer contents to the response
+		c.String(http.StatusOK, buf.String())
+
+	} else {
+		c.JSON(http.StatusOK, voteResults)
+	}
 }
