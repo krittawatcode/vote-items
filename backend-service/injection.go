@@ -3,14 +3,20 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/krittawatcode/vote-items/backend-service/database"
 	"github.com/krittawatcode/vote-items/backend-service/delivery/handler"
+	"github.com/krittawatcode/vote-items/backend-service/docs"
 	"github.com/krittawatcode/vote-items/backend-service/repository"
 	"github.com/krittawatcode/vote-items/backend-service/usecase"
 )
@@ -86,6 +92,11 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 
 	// initialize gin.Engine
 	router := gin.Default()
+	// Add a health check endpoint
+
+	// set up swagger
+	// docs.SwaggerInfo.BasePath = "/api/v1"
+	// router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// read in API_URL
 	baseURL := os.Getenv("API_URL")
@@ -103,6 +114,14 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	 * setup vote item handler
 	 */
 	handler.NewVoteItemsHandler(router, voteItemUseCase, voteUseCase, voteSessionUseCase, tokenUseCase, baseURL, time.Duration(time.Duration(ht)*time.Second))
+
+	// set up swagger
+	docs.SwaggerInfo.BasePath = baseURL
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "running"})
+	})
 
 	return router, nil
 }

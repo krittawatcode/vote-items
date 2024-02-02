@@ -44,7 +44,7 @@ services:
       - "8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend-service.rule=Host(`krittawatcode.test`) && PathPrefix(`/api/v1`)"
+      - "traefik.http.routers.backend-service.rule=Host(`krittawatcode.test`)" # delete prefix for swagger and health
     environment:
       - ENV=dev
     volumes:

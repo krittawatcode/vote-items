@@ -71,6 +71,14 @@ func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, vu doma
 	}
 }
 
+// @BasePath /api/v1
+// @Summary Get all active vote items
+// @Description Get all active vote items
+// @Produce json
+// @Accept json
+// @Security BearerAuth
+// @Success 200 {array} VoteItem
+// @Router /vote_items [get]
 // GET /api/v1/vote_items: Get all active vote items
 func (h *VoteItemsHandler) OpenVoteSession(c *gin.Context) {
 	idStr := c.Param("id")
