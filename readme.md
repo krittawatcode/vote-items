@@ -52,7 +52,7 @@ This will route any requests for `krittawatcode.test` to your local machine.
 
 - OPEN / CLOSE VOTE SESSIONS 
 ```
-1. GET /api/v1/vote_items:
+1. GET /api/v1/vote_sessions/:id/open // Open new vote session
 2. GET /api/v1/vote_sessions/open  // Get open vote session
 3. PUT /api/v1/vote_sessions/{id}/close // Close a vote session
 ```

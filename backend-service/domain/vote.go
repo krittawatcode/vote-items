@@ -69,7 +69,7 @@ type Vote struct {
 }
 
 type VoteResult struct {
-	VoteItemID   uuid.UUID `json:"vote_item_id" gorm:"type:uuid;default:gen_random_uuid()`
+	VoteItemID   uuid.UUID `json:"vote_item_id" gorm:"type:uuid;default:gen_random_uuid()"`
 	VoteItemName string    `json:"vote_item_name"`
 	VoteCount    uint      `json:"vote_count" gorm:"column:vote_count"`
 }

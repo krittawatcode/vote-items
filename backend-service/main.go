@@ -13,6 +13,7 @@ import (
 	"github.com/krittawatcode/vote-items/backend-service/domain"
 )
 
+// @title Vote Items API
 func main() {
 	log.Println("Starting server...")
 
