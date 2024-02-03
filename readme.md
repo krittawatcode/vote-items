@@ -3,7 +3,7 @@ This repository hosts the Vote Items application.
 
 This application serves as a refined project demonstrating Clean Architecture design principles. It includes features such as a reverse proxy, testing, structured code organization, and Swagger documentation.
 
-![App Overview](./application_overview.png)
+![App Overview](./application_overview.png)\
 You can read about the design of this application in my [Medium article](https://medium.com/@kritwis/golang-clean-architecture-with-demo-e0938e5be02b).
 
 ## Setup
