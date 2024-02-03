@@ -1,4 +1,495 @@
+definitions:
+  domain.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  domain.SuccessResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  domain.TokenPair:
+    properties:
+      idToken:
+        type: string
+      refreshToken:
+        type: string
+    type: object
+  domain.User:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        type: string
+      uid:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.Vote:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: string
+      session_id:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      vote_item_id:
+        type: string
+    type: object
+  domain.VoteItem:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      session_id:
+        type: integer
+      updated_at:
+        type: string
+      vote_count:
+        type: integer
+    required:
+    - description
+    - name
+    type: object
+  domain.VoteResult:
+    properties:
+      vote_count:
+        type: integer
+      vote_item_id:
+        type: string
+      vote_item_name:
+        type: string
+    type: object
+  domain.VoteSession:
+    properties:
+      created_at:
+        type: string
+      createdAt:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      is_open:
+        type: boolean
+      updated_at:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
 info:
   contact: {}
-paths: {}
+  title: Vote Items API
+paths:
+  /api/v1/users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get details of the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user details
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Get user details
+      tags:
+      - users
+  /api/v1/users/signIn:
+    post:
+      consumes:
+      - application/json
+      description: Sign in an existing user with email and password
+      parameters:
+      - description: Email
+        in: body
+        name: email
+        required: true
+        schema:
+          type: string
+      - description: Password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully signed in and returned tokens
+          schema:
+            $ref: '#/definitions/domain.TokenPair'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Sign in an existing user
+      tags:
+      - users
+  /api/v1/users/signUp:
+    post:
+      consumes:
+      - application/json
+      description: Sign up a new user with email and password
+      parameters:
+      - description: Email
+        in: body
+        name: email
+        required: true
+        schema:
+          type: string
+      - description: Password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully signed up and returned tokens
+          schema:
+            $ref: '#/definitions/domain.TokenPair'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Sign up a new user
+      tags:
+      - users
+  /api/v1/vote_items:
+    delete:
+      consumes:
+      - application/json
+      description: Clear all vote items
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Vote item cleared successfully
+          schema:
+            $ref: '#/definitions/domain.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Clear all vote items
+      tags:
+      - vote_items
+    get:
+      description: Retrieve all active vote items
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved the active vote items
+          schema:
+            items:
+              $ref: '#/definitions/domain.VoteItem'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Get all active vote items
+      tags:
+      - vote_items
+    post:
+      consumes:
+      - application/json
+      description: Create a new vote item with the provided fields
+      parameters:
+      - description: Vote Item
+        in: body
+        name: voteItem
+        required: true
+        schema:
+          $ref: '#/definitions/domain.VoteItem'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created the vote item
+          schema:
+            $ref: '#/definitions/domain.VoteItem'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Create a new vote item
+      tags:
+      - vote_items
+  /api/v1/vote_items/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a vote item by id
+      parameters:
+      - description: Vote Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Vote item deleted successfully
+          schema:
+            $ref: '#/definitions/domain.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Delete a vote item by id
+      tags:
+      - vote_items
+    put:
+      consumes:
+      - application/json
+      description: Update a vote item by ID
+      parameters:
+      - description: Vote Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Vote Item
+        in: body
+        name: voteItem
+        required: true
+        schema:
+          $ref: '#/definitions/domain.VoteItem'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Vote item updated successfully
+          schema:
+            $ref: '#/definitions/domain.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Update a vote item
+      tags:
+      - vote_items
+  /api/v1/vote_results/{session_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get vote results by session id. Can also return results in CSV
+        format.
+      parameters:
+      - description: Session ID
+        in: path
+        name: session_id
+        required: true
+        type: integer
+      - description: Format of the response (json or csv)
+        in: query
+        name: format
+        type: string
+      produces:
+      - application/json
+      - text/csv
+      responses:
+        "200":
+          description: Vote results successfully retrieved
+          schema:
+            items:
+              $ref: '#/definitions/domain.VoteResult'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Get vote results by session id
+      tags:
+      - vote_results
+  /api/v1/vote_sessions/:id/open:
+    put:
+      consumes:
+      - application/json
+      description: Open a vote session by ID
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Vote session opened successfully
+          schema:
+            $ref: '#/definitions/domain.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Open a vote session
+      tags:
+      - vote_sessions
+  /api/v1/vote_sessions/{id}/close:
+    put:
+      consumes:
+      - application/json
+      description: Close a vote session by ID
+      parameters:
+      - description: Vote Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Vote session closed successfully
+          schema:
+            $ref: '#/definitions/domain.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Close a vote session
+      tags:
+      - vote_sessions
+  /api/v1/vote_sessions/open:
+    get:
+      description: Retrieve the currently open vote session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved the open vote session
+          schema:
+            $ref: '#/definitions/domain.VoteSession'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Get open vote session
+      tags:
+      - vote_sessions
+  /api/v1/votes:
+    post:
+      consumes:
+      - application/json
+      description: Cast a vote
+      parameters:
+      - description: Vote payload
+        in: body
+        name: vote
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Vote'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Vote successfully cast
+          schema:
+            $ref: '#/definitions/domain.Vote'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Cast a vote
+      tags:
+      - vote
 swagger: "2.0"

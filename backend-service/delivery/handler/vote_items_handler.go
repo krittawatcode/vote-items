@@ -71,15 +71,18 @@ func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, vu doma
 	}
 }
 
-// @BasePath /api/v1
-// @Summary Get all active vote items
-// @Description Get all active vote items
-// @Produce json
-// @Accept json
-// @Security BearerAuth
-// @Success 200 {array} VoteItem
-// @Router /vote_items [get]
-// GET /api/v1/vote_items: Get all active vote items
+// PUT /vote_sessions/:id/open // Open a vote session
+// OpenVoteSession opens a vote session
+// @Summary Open a vote session
+// @Description Open a vote session by ID
+// @Tags vote_sessions
+// @Accept  json
+// @Produce  json
+// @Param id path int true "Session ID"
+// @Success 200 {object} domain.SuccessResponse "Vote session opened successfully"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/vote_sessions/:id/open [put]
 func (h *VoteItemsHandler) OpenVoteSession(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -97,6 +100,13 @@ func (h *VoteItemsHandler) OpenVoteSession(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "Vote session opened successfully"})
 }
 
+// @Summary Get open vote session
+// @Description Retrieve the currently open vote session
+// @Tags vote_sessions
+// @Produce  json
+// @Success 200 {object} domain.VoteSession "Successfully retrieved the open vote session"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/vote_sessions/open [get]
 // GET /api/v1/vote_sessions/open: Get open vote session
 func (h *VoteItemsHandler) GetOpenVoteSession(c *gin.Context) {
 	voteSession, err := h.VoteSessionUseCase.GetOpenVoteSession()
@@ -108,6 +118,16 @@ func (h *VoteItemsHandler) GetOpenVoteSession(c *gin.Context) {
 	c.JSON(http.StatusOK, voteSession)
 }
 
+// @Summary Close a vote session
+// @Description Close a vote session by ID
+// @Tags vote_sessions
+// @Accept  json
+// @Produce  json
+// @Param   id     path    int     true    "Vote Session ID"
+// @Success 200 {object} domain.SuccessResponse "Vote session closed successfully"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/vote_sessions/{id}/close [put]
 // PUT /api/v1/vote_sessions/{id}/close: Close a vote session
 func (h *VoteItemsHandler) CloseVoteSession(c *gin.Context) {
 	idStr := c.Param("id")
@@ -126,6 +146,13 @@ func (h *VoteItemsHandler) CloseVoteSession(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "Vote session closed successfully"})
 }
 
+// @Summary Get all active vote items
+// @Description Retrieve all active vote items
+// @Tags vote_items
+// @Produce  json
+// @Success 200 {array} domain.VoteItem "Successfully retrieved the active vote items"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/vote_items [get]
 // GET /api/v1/vote_items: Get all active vote items
 func (h *VoteItemsHandler) FetchActiveVoteItems(c *gin.Context) {
 	voteItems, err := h.VoteItemUseCase.FetchActive(c.Request.Context())
@@ -137,6 +164,16 @@ func (h *VoteItemsHandler) FetchActiveVoteItems(c *gin.Context) {
 	c.JSON(http.StatusOK, voteItems)
 }
 
+// @Summary Create a new vote item
+// @Description Create a new vote item with the provided fields
+// @Tags vote_items
+// @Accept  json
+// @Produce  json
+// @Param   voteItem     body    domain.VoteItem     true    "Vote Item"
+// @Success 201 {object} domain.VoteItem "Successfully created the vote item"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/vote_items [post]
 // POST /api/v1/vote_items: Create a new vote item
 func (h *VoteItemsHandler) CreateVoteItem(c *gin.Context) {
 	var voteItem domain.VoteItem
@@ -154,6 +191,17 @@ func (h *VoteItemsHandler) CreateVoteItem(c *gin.Context) {
 	c.JSON(http.StatusCreated, voteItem)
 }
 
+// @Summary Update a vote item
+// @Description Update a vote item by ID
+// @Tags vote_items
+// @Accept  json
+// @Produce  json
+// @Param   id     path    string     true    "Vote Item ID"
+// @Param   voteItem     body    domain.VoteItem     true    "Vote Item"
+// @Success 200 {object} domain.SuccessResponse "Vote item updated successfully"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/vote_items/{id} [put]
 // PUT /api/v1/vote_items/{id}: Update item
 func (h *VoteItemsHandler) UpdateVoteItem(c *gin.Context) {
 	id := c.Param("id")
@@ -190,6 +238,16 @@ func (h *VoteItemsHandler) UpdateVoteItem(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
+// @Summary Delete a vote item by id
+// @Description Delete a vote item by id
+// @Tags vote_items
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Vote Item ID"
+// @Success 200 {object} domain.SuccessResponse "Vote item deleted successfully"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/vote_items/{id} [delete]
 // DELETE /api/v1/vote_items/{id}: Delete a vote item by id
 func (h *VoteItemsHandler) DeleteVoteItem(c *gin.Context) {
 	id := c.Param("id")
@@ -214,17 +272,37 @@ func (h *VoteItemsHandler) DeleteVoteItem(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
+// @Summary Clear all vote items
+// @Description Clear all vote items
+// @Tags vote_items
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} domain.SuccessResponse "Vote item cleared successfully"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/vote_items [delete]
 // DELETE /api/v1/vote_items: Clear all vote items
 func (h *VoteItemsHandler) ClearVoteItem(c *gin.Context) {
 	err := h.VoteItemUseCase.ClearVoteItem(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": apperror.NewInternal()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
+// @Summary Cast a vote
+// @Description Cast a vote
+// @Tags vote
+// @Accept  json
+// @Produce  json
+// @Param vote body domain.Vote true "Vote payload"
+// @Success 201 {object} domain.Vote "Vote successfully cast"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 401 {object} domain.ErrorResponse "Unauthorized"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/votes [post]
 // POST /api/v1/votes: Cast a vote
 func (h *VoteItemsHandler) CastVote(c *gin.Context) {
 	var vote domain.Vote
@@ -249,6 +327,18 @@ func (h *VoteItemsHandler) CastVote(c *gin.Context) {
 	c.JSON(http.StatusCreated, vote)
 }
 
+// @Summary Get vote results by session id
+// @Description Get vote results by session id. Can also return results in CSV format.
+// @Tags vote_results
+// @Accept  json
+// @Produce  json
+// @Produce  text/csv
+// @Param session_id path int true "Session ID"
+// @Param format query string false "Format of the response (json or csv)"
+// @Success 200 {array} domain.VoteResult "Vote results successfully retrieved"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/vote_results/{session_id} [get]
 // GET /api/v1/vote_results/{session_id}: Get vote results by session id
 // GET /api/v1/vote_results/{session_id}?format=csv: Get vote results by session id in CSV format
 func (h *VoteItemsHandler) GetVoteResultsBySession(c *gin.Context) {

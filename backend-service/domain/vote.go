@@ -8,6 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// VoteSession represents the vote session model
+// swagger:model
 type VoteSession struct {
 	ID        uint `db:"id" json:"id"`
 	IsOpen    bool `gorm:"type:boolean;not null;default:true" json:"is_open"`
@@ -30,6 +32,8 @@ type VoteSessionRepository interface {
 	GetVoteSessionByID(ctx context.Context, id uint) (*VoteSession, error)
 }
 
+// VoteItem represents the vote item model
+// swagger:model
 type VoteItem struct {
 	ID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid()" json:"id"`
 	Name        string    `gorm:"type:varchar(255);not null" binding:"required" json:"name"`

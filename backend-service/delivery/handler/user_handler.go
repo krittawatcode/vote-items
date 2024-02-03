@@ -44,8 +44,15 @@ func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUs
 	ug.POST("/tokens", h.Tokens)
 }
 
-// Me handler calls services for getting
-// a user's details
+// @Summary Get user details
+// @Description Get details of the current user
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} domain.User "Successfully retrieved user details"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/users/me [get]
 // Me handler calls services for getting
 // a user's details
 func (h *UserHandler) Me(c *gin.Context) {
@@ -102,6 +109,17 @@ type signUpReq struct {
 	Password string `json:"password" binding:"required,gte=6,lte=30"`
 }
 
+// @Summary Sign up a new user
+// @Description Sign up a new user with email and password
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Param   email     body    string     true    "Email"
+// @Param   password  body    string     true    "Password"
+// @Success 201 {object} domain.TokenPair "Successfully signed up and returned tokens"
+// @Failure 400 {object} map[string]string "Bad Request"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/v1/users/signUp [post]
 // Sign up handler
 func (h *UserHandler) SignUp(c *gin.Context) {
 	// define a variable to which we'll bind incoming
@@ -154,6 +172,17 @@ type signInReq struct {
 	Password string `json:"password" binding:"required,gte=6,lte=30"`
 }
 
+// @Summary Sign in an existing user
+// @Description Sign in an existing user with email and password
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Param   email     body    string     true    "Email"
+// @Param   password  body    string     true    "Password"
+// @Success 200 {object} domain.TokenPair "Successfully signed in and returned tokens"
+// @Failure 400 {object} map[string]string "Bad Request"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/v1/users/signIn [post]
 // SignIn used to authenticate extant user
 func (h *UserHandler) SignIn(c *gin.Context) {
 	var req signInReq
