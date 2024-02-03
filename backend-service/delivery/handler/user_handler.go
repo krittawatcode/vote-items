@@ -29,31 +29,30 @@ func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUs
 	}
 
 	// Create an user group
-	g := router.Group(baseUrl)
+	// ug = user group shorthand
+	ug := router.Group(baseUrl)
 
 	if gin.Mode() != gin.TestMode {
-		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
-	}
-
-	// Add a health check endpoint
-	g.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "running"})
-	})
-
-	if gin.Mode() != gin.TestMode {
-		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
-		g.GET("/me", middleware.AuthUser(h.TokenUseCase), h.Me)
+		ug.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
+		ug.GET("/me", middleware.AuthUser(h.TokenUseCase), h.Me)
 	} else {
-		g.GET("/me", h.Me)
+		ug.GET("/me", h.Me)
 	}
 
-	g.POST("/signUp", h.SignUp)
-	g.POST("/singIn", h.SignIn)
-	g.POST("/tokens", h.Tokens)
+	ug.POST("/signUp", h.SignUp)
+	ug.POST("/singIn", h.SignIn)
+	ug.POST("/tokens", h.Tokens)
 }
 
-// Me handler calls services for getting
-// a user's details
+// @Summary Get user details
+// @Description Get details of the current user
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} domain.User "Successfully retrieved user details"
+// @Failure 400 {object} domain.ErrorResponse "Bad Request"
+// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
+// @Router /api/v1/users/me [get]
 // Me handler calls services for getting
 // a user's details
 func (h *UserHandler) Me(c *gin.Context) {
@@ -110,6 +109,17 @@ type signUpReq struct {
 	Password string `json:"password" binding:"required,gte=6,lte=30"`
 }
 
+// @Summary Sign up a new user
+// @Description Sign up a new user with email and password
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Param   email     body    string     true    "Email"
+// @Param   password  body    string     true    "Password"
+// @Success 201 {object} domain.TokenPair "Successfully signed up and returned tokens"
+// @Failure 400 {object} map[string]string "Bad Request"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/v1/users/signUp [post]
 // Sign up handler
 func (h *UserHandler) SignUp(c *gin.Context) {
 	// define a variable to which we'll bind incoming
@@ -162,6 +172,17 @@ type signInReq struct {
 	Password string `json:"password" binding:"required,gte=6,lte=30"`
 }
 
+// @Summary Sign in an existing user
+// @Description Sign in an existing user with email and password
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Param   email     body    string     true    "Email"
+// @Param   password  body    string     true    "Password"
+// @Success 200 {object} domain.TokenPair "Successfully signed in and returned tokens"
+// @Failure 400 {object} map[string]string "Bad Request"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/v1/users/signIn [post]
 // SignIn used to authenticate extant user
 func (h *UserHandler) SignIn(c *gin.Context) {
 	var req signInReq
