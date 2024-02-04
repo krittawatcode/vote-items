@@ -9,7 +9,7 @@ create-keypair:
 	openssl genpkey -algorithm RSA -out $(CPATH)/rsa_private_$(ENV).pem -pkeyopt rsa_keygen_bits:2048
 	openssl rsa -in $(CPATH)/rsa_private_$(ENV).pem -pubout -out $(CPATH)/rsa_public_$(ENV).pem
 
+# still have bug with swag init, need to copy command to terminal
 swagger:
-	@echo "PWD: $(PWD)"	
 	@echo "Generating swagger"
-	swag init --parseDependency --parseInternal
+    PATH=$(go env GOPATH)/bin:$$PATH swag init --parseDependency --parseInternal

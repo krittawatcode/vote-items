@@ -15,6 +15,10 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
+// HashPassword takes a password string and returns its hashed representation along with an error, if any.
+// It generates a random salt and uses the scrypt algorithm to hash the password with the salt.
+// The cost parameters used are recommended by the scrypt package.
+// The resulting hashed password is returned as a hex-encoded string with the salt appended.
 func HashPassword(password string) (string, error) {
 	// example for making salt - https://play.golang.org/p/_Aw6WeWC42I
 	salt := make([]byte, 32)
@@ -35,6 +39,13 @@ func HashPassword(password string) (string, error) {
 	return hashedPW, nil
 }
 
+// comparePasswords compares a stored password with a supplied password.
+// It takes the stored password and the supplied password as input parameters.
+// The stored password is expected to be in the format "hash.salt".
+// It splits the stored password into hash and salt, decodes the salt from hex,
+// and then uses scrypt.Key to generate a hash from the supplied password and salt.
+// Finally, it compares the generated hash with the stored hash and returns true if they match, false otherwise.
+// If any error occurs during the process, it returns false and the error.
 func comparePasswords(storedPassword string, suppliedPassword string) (bool, error) {
 	pwsalt := strings.Split(storedPassword, ".")
 
