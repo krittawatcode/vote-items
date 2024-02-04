@@ -110,7 +110,7 @@ info:
   contact: {}
   title: Vote Items API
 paths:
-  /api/v1/users/me:
+  /users/me:
     get:
       consumes:
       - application/json
@@ -133,7 +133,7 @@ paths:
       summary: Get user details
       tags:
       - users
-  /api/v1/users/signIn:
+  /users/signIn:
     post:
       consumes:
       - application/json
@@ -173,7 +173,7 @@ paths:
       summary: Sign in an existing user
       tags:
       - users
-  /api/v1/users/signUp:
+  /users/signUp:
     post:
       consumes:
       - application/json
@@ -213,7 +213,7 @@ paths:
       summary: Sign up a new user
       tags:
       - users
-  /api/v1/vote_items:
+  /vote_items:
     delete:
       consumes:
       - application/json
@@ -283,7 +283,7 @@ paths:
       summary: Create a new vote item
       tags:
       - vote_items
-  /api/v1/vote_items/{id}:
+  /vote_items/{id}:
     delete:
       consumes:
       - application/json
@@ -346,7 +346,7 @@ paths:
       summary: Update a vote item
       tags:
       - vote_items
-  /api/v1/vote_results/{session_id}:
+  /vote_results/{session_id}:
     get:
       consumes:
       - application/json
@@ -383,7 +383,7 @@ paths:
       summary: Get vote results by session id
       tags:
       - vote_results
-  /api/v1/vote_sessions/:id/open:
+  /vote_sessions/:id/open:
     put:
       consumes:
       - application/json
@@ -412,7 +412,7 @@ paths:
       summary: Open a vote session
       tags:
       - vote_sessions
-  /api/v1/vote_sessions/{id}/close:
+  /vote_sessions/{id}/close:
     put:
       consumes:
       - application/json
@@ -441,7 +441,7 @@ paths:
       summary: Close a vote session
       tags:
       - vote_sessions
-  /api/v1/vote_sessions/open:
+  /vote_sessions/open:
     get:
       description: Retrieve the currently open vote session
       produces:
@@ -458,7 +458,7 @@ paths:
       summary: Get open vote session
       tags:
       - vote_sessions
-  /api/v1/votes:
+  /votes:
     post:
       consumes:
       - application/json

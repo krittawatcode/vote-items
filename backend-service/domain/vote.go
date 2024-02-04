@@ -78,12 +78,18 @@ type VoteResult struct {
 	VoteCount    uint      `json:"vote_count" gorm:"column:vote_count"`
 }
 
+type VoteResultUseCase interface {
+	GetVoteResultsBySession(sessionID uint) ([]VoteResult, error)
+}
+
+type VoteResultRepository interface {
+	GetVoteResultsBySession(sessionID uint) ([]VoteResult, error)
+}
+
 type VoteUseCase interface {
 	Create(ctx context.Context, v *Vote) error
-	GetVoteResultsBySession(sessionID uint) ([]VoteResult, error)
 }
 
 type VoteRepository interface {
 	Create(ctx context.Context, v *Vote) error
-	GetVoteResultsBySession(sessionID uint) ([]VoteResult, error)
 }
