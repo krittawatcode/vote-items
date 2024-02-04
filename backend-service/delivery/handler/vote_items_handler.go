@@ -58,8 +58,8 @@ func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, tu doma
 // @Produce  json
 // @Success 200 {array} domain.VoteItem "Successfully retrieved the active vote items"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items [get]
-// GET /api/v1/vote_items: Get all active vote items
+// @Router /vote_items [get]
+// GET /vote_items: Get all active vote items
 func (h *VoteItemsHandler) FetchActiveVoteItems(c *gin.Context) {
 	voteItems, err := h.VoteItemUseCase.FetchActive(c.Request.Context())
 	if err != nil {
@@ -79,8 +79,8 @@ func (h *VoteItemsHandler) FetchActiveVoteItems(c *gin.Context) {
 // @Success 201 {object} domain.VoteItem "Successfully created the vote item"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items [post]
-// POST /api/v1/vote_items: Create a new vote item
+// @Router /vote_items [post]
+// POST /vote_items: Create a new vote item
 func (h *VoteItemsHandler) CreateVoteItem(c *gin.Context) {
 	var voteItem domain.VoteItem
 	if err := c.ShouldBindJSON(&voteItem); err != nil {
@@ -107,8 +107,8 @@ func (h *VoteItemsHandler) CreateVoteItem(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse "Vote item updated successfully"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items/{id} [put]
-// PUT /api/v1/vote_items/{id}: Update item
+// @Router /vote_items/{id} [put]
+// PUT /vote_items/{id}: Update item
 func (h *VoteItemsHandler) UpdateVoteItem(c *gin.Context) {
 	id := c.Param("id")
 	log.Printf("Received id: %v", id)
@@ -153,8 +153,8 @@ func (h *VoteItemsHandler) UpdateVoteItem(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse "Vote item deleted successfully"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items/{id} [delete]
-// DELETE /api/v1/vote_items/{id}: Delete a vote item by id
+// @Router /vote_items/{id} [delete]
+// DELETE /vote_items/{id}: Delete a vote item by id
 func (h *VoteItemsHandler) DeleteVoteItem(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -186,8 +186,8 @@ func (h *VoteItemsHandler) DeleteVoteItem(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse "Vote item cleared successfully"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items [delete]
-// DELETE /api/v1/vote_items: Clear all vote items
+// @Router /vote_items [delete]
+// DELETE /vote_items: Clear all vote items
 func (h *VoteItemsHandler) ClearVoteItem(c *gin.Context) {
 	err := h.VoteItemUseCase.ClearVoteItem(c.Request.Context())
 	if err != nil {

@@ -57,7 +57,7 @@ func NewVoteSessionsHandler(router *gin.Engine, vsu domain.VoteSessionUseCase, t
 // @Success 200 {object} domain.SuccessResponse "Vote session opened successfully"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_sessions/:id/open [put]
+// @Router /vote_sessions/:id/open [put]
 func (h *VoteSessionsHandler) OpenVoteSession(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -81,8 +81,8 @@ func (h *VoteSessionsHandler) OpenVoteSession(c *gin.Context) {
 // @Produce  json
 // @Success 200 {object} domain.VoteSession "Successfully retrieved the open vote session"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_sessions/open [get]
-// GET /api/v1/vote_sessions/open: Get open vote session
+// @Router /vote_sessions/open [get]
+// GET /vote_sessions/open: Get open vote session
 func (h *VoteSessionsHandler) GetOpenVoteSession(c *gin.Context) {
 	voteSession, err := h.VoteSessionUseCase.GetOpenVoteSession()
 	if err != nil {
@@ -102,8 +102,8 @@ func (h *VoteSessionsHandler) GetOpenVoteSession(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse "Vote session closed successfully"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_sessions/{id}/close [put]
-// PUT /api/v1/vote_sessions/{id}/close: Close a vote session
+// @Router /vote_sessions/{id}/close [put]
+// PUT /vote_sessions/{id}/close: Close a vote session
 func (h *VoteSessionsHandler) CloseVoteSession(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)

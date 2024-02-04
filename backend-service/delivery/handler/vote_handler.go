@@ -45,8 +45,8 @@ func NewVotesHandler(router *gin.Engine, vu domain.VoteUseCase, tu domain.TokenU
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 401 {object} domain.ErrorResponse "Unauthorized"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/votes [post]
-// POST /api/v1/votes: Cast a vote
+// @Router /votes [post]
+// POST /votes: Cast a vote
 func (h *VotesHandler) CastVote(c *gin.Context) {
 	var vote domain.Vote
 	if err := c.ShouldBindJSON(&vote); err != nil {
