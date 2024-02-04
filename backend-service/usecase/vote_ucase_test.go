@@ -28,27 +28,4 @@ func TestVoteUsecase(t *testing.T) {
 		assert.NoError(t, err)
 		mockVoteRepo.AssertExpectations(t)
 	})
-
-	t.Run("GetVoteResultsBySession", func(t *testing.T) {
-		sessionID := uint(1)
-
-		mockVoteResults := []domain.VoteResult{
-			{
-				VoteItemID: uuid.New(),
-				VoteCount:  10,
-			},
-			{
-				VoteItemID: uuid.New(),
-				VoteCount:  5,
-			},
-		}
-
-		mockVoteRepo.On("GetVoteResultsBySession", sessionID).Return(mockVoteResults, nil)
-
-		voteResults, err := mockVoteUsecase.GetVoteResultsBySession(sessionID)
-
-		assert.NoError(t, err)
-		assert.Equal(t, mockVoteResults, voteResults)
-		mockVoteRepo.AssertExpectations(t)
-	})
 }

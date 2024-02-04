@@ -52,7 +52,7 @@ func NewUserHandler(router *gin.Engine, uu domain.UserUseCase, tu domain.TokenUs
 // @Success 200 {object} domain.User "Successfully retrieved user details"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/users/me [get]
+// @Router /users/me [get]
 // Me handler calls services for getting
 // a user's details
 func (h *UserHandler) Me(c *gin.Context) {
@@ -119,7 +119,7 @@ type signUpReq struct {
 // @Success 201 {object} domain.TokenPair "Successfully signed up and returned tokens"
 // @Failure 400 {object} map[string]string "Bad Request"
 // @Failure 500 {object} map[string]string "Internal Server Error"
-// @Router /api/v1/users/signUp [post]
+// @Router /users/signUp [post]
 // Sign up handler
 func (h *UserHandler) SignUp(c *gin.Context) {
 	// define a variable to which we'll bind incoming
@@ -182,7 +182,7 @@ type signInReq struct {
 // @Success 200 {object} domain.TokenPair "Successfully signed in and returned tokens"
 // @Failure 400 {object} map[string]string "Bad Request"
 // @Failure 500 {object} map[string]string "Internal Server Error"
-// @Router /api/v1/users/signIn [post]
+// @Router /users/signIn [post]
 // SignIn used to authenticate extant user
 func (h *UserHandler) SignIn(c *gin.Context) {
 	var req signInReq

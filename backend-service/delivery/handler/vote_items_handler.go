@@ -1,12 +1,9 @@
 package handler
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,26 +15,22 @@ import (
 
 // Handler struct holds required services for handler to function
 type VoteItemsHandler struct {
-	Router             *gin.Engine
-	VoteItemUseCase    domain.VoteItemUseCase
-	VoteSessionUseCase domain.VoteSessionUseCase
-	VoteUseCase        domain.VoteUseCase
-	TokenUseCase       domain.TokenUseCase
-	BaseUrl            string // base url for user routes
-	TimeoutDuration    time.Duration
+	Router          *gin.Engine
+	VoteItemUseCase domain.VoteItemUseCase
+	TokenUseCase    domain.TokenUseCase
+	BaseUrl         string // base url for user routes
+	TimeoutDuration time.Duration
 }
 
 // Does not return as it deals directly with a reference to the gin Engine
-func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, vu domain.VoteUseCase, vsu domain.VoteSessionUseCase, tu domain.TokenUseCase, baseUrl string, timeout time.Duration) {
+func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, tu domain.TokenUseCase, url string, timeout time.Duration) {
 	h := &VoteItemsHandler{
-		VoteItemUseCase:    viu,
-		VoteSessionUseCase: vsu,
-		VoteUseCase:        vu,
-		TokenUseCase:       tu,
+		VoteItemUseCase: viu,
+		TokenUseCase:    tu,
 	}
 
 	// Create an vote-items group
-	g := router.Group(baseUrl)
+	g := router.Group(url)
 
 	if gin.Mode() != gin.TestMode {
 		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
@@ -46,104 +39,17 @@ func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, vu doma
 	if gin.Mode() != gin.TestMode {
 		// set up middle ware for time out
 		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
-		// get current open vote session
-		g.GET("/vote_sessions/open", middleware.AuthUser(h.TokenUseCase), h.GetOpenVoteSession)
-		// create a new vote session
-		g.PUT("/vote_sessions/:id/open", middleware.AuthUser(h.TokenUseCase), h.OpenVoteSession)
-		// close a vote session
-		g.PUT("/vote_sessions/:id/close", middleware.AuthUser(h.TokenUseCase), h.CloseVoteSession)
 		// get all active vote items
-		g.GET("/vote_items", middleware.AuthUser(h.TokenUseCase), h.FetchActiveVoteItems)
+		g.GET("/", middleware.AuthUser(h.TokenUseCase), h.FetchActiveVoteItems)
 		// create a new vote item
-		g.POST("/vote_items", middleware.AuthUser(h.TokenUseCase), h.CreateVoteItem)
+		g.POST("/", middleware.AuthUser(h.TokenUseCase), h.CreateVoteItem)
 		// update a vote item
-		g.PUT("/vote_items/:id", middleware.AuthUser(h.TokenUseCase), h.UpdateVoteItem)
+		g.PUT("/:id", middleware.AuthUser(h.TokenUseCase), h.UpdateVoteItem)
 		// delete a vote item
-		g.DELETE("/vote_items/:id", middleware.AuthUser(h.TokenUseCase), h.DeleteVoteItem)
+		g.DELETE("/:id", middleware.AuthUser(h.TokenUseCase), h.DeleteVoteItem)
 		// clear all vote items
-		g.DELETE("/vote_items", middleware.AuthUser(h.TokenUseCase), h.ClearVoteItem)
-		// cast a vote
-		g.POST("/votes", middleware.AuthUser(h.TokenUseCase), h.CastVote)
-		// get vote results by session id
-		// GET /api/v1/vote_results/{session_id}: Get vote results by session id
-		// GET /api/v1/vote_results/{session_id}?format=csv: Get vote results by session id in CSV format
-		g.GET("/vote_results/:session_id", middleware.AuthUser(h.TokenUseCase), h.GetVoteResultsBySession)
+		g.DELETE("/", middleware.AuthUser(h.TokenUseCase), h.ClearVoteItem)
 	}
-}
-
-// PUT /vote_sessions/:id/open // Open a vote session
-// OpenVoteSession opens a vote session
-// @Summary Open a vote session
-// @Description Open a vote session by ID
-// @Tags vote_sessions
-// @Accept  json
-// @Produce  json
-// @Param id path int true "Session ID"
-// @Success 200 {object} domain.SuccessResponse "Vote session opened successfully"
-// @Failure 400 {object} domain.ErrorResponse "Bad Request"
-// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_sessions/:id/open [put]
-func (h *VoteItemsHandler) OpenVoteSession(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session ID"})
-		return
-	}
-
-	err = h.VoteSessionUseCase.OpenVoteSession(uint(id))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"status": "Vote session opened successfully"})
-}
-
-// @Summary Get open vote session
-// @Description Retrieve the currently open vote session
-// @Tags vote_sessions
-// @Produce  json
-// @Success 200 {object} domain.VoteSession "Successfully retrieved the open vote session"
-// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_sessions/open [get]
-// GET /api/v1/vote_sessions/open: Get open vote session
-func (h *VoteItemsHandler) GetOpenVoteSession(c *gin.Context) {
-	voteSession, err := h.VoteSessionUseCase.GetOpenVoteSession()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, voteSession)
-}
-
-// @Summary Close a vote session
-// @Description Close a vote session by ID
-// @Tags vote_sessions
-// @Accept  json
-// @Produce  json
-// @Param   id     path    int     true    "Vote Session ID"
-// @Success 200 {object} domain.SuccessResponse "Vote session closed successfully"
-// @Failure 400 {object} domain.ErrorResponse "Bad Request"
-// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_sessions/{id}/close [put]
-// PUT /api/v1/vote_sessions/{id}/close: Close a vote session
-func (h *VoteItemsHandler) CloseVoteSession(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session ID"})
-		return
-	}
-
-	err = h.VoteSessionUseCase.CloseVoteSession(uint(id))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"status": "Vote session closed successfully"})
 }
 
 // @Summary Get all active vote items
@@ -152,8 +58,8 @@ func (h *VoteItemsHandler) CloseVoteSession(c *gin.Context) {
 // @Produce  json
 // @Success 200 {array} domain.VoteItem "Successfully retrieved the active vote items"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items [get]
-// GET /api/v1/vote_items: Get all active vote items
+// @Router /vote_items [get]
+// GET /vote_items: Get all active vote items
 func (h *VoteItemsHandler) FetchActiveVoteItems(c *gin.Context) {
 	voteItems, err := h.VoteItemUseCase.FetchActive(c.Request.Context())
 	if err != nil {
@@ -173,8 +79,8 @@ func (h *VoteItemsHandler) FetchActiveVoteItems(c *gin.Context) {
 // @Success 201 {object} domain.VoteItem "Successfully created the vote item"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items [post]
-// POST /api/v1/vote_items: Create a new vote item
+// @Router /vote_items [post]
+// POST /vote_items: Create a new vote item
 func (h *VoteItemsHandler) CreateVoteItem(c *gin.Context) {
 	var voteItem domain.VoteItem
 	if err := c.ShouldBindJSON(&voteItem); err != nil {
@@ -201,8 +107,8 @@ func (h *VoteItemsHandler) CreateVoteItem(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse "Vote item updated successfully"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items/{id} [put]
-// PUT /api/v1/vote_items/{id}: Update item
+// @Router /vote_items/{id} [put]
+// PUT /vote_items/{id}: Update item
 func (h *VoteItemsHandler) UpdateVoteItem(c *gin.Context) {
 	id := c.Param("id")
 	log.Printf("Received id: %v", id)
@@ -247,8 +153,8 @@ func (h *VoteItemsHandler) UpdateVoteItem(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse "Vote item deleted successfully"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items/{id} [delete]
-// DELETE /api/v1/vote_items/{id}: Delete a vote item by id
+// @Router /vote_items/{id} [delete]
+// DELETE /vote_items/{id}: Delete a vote item by id
 func (h *VoteItemsHandler) DeleteVoteItem(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -280,8 +186,8 @@ func (h *VoteItemsHandler) DeleteVoteItem(c *gin.Context) {
 // @Success 200 {object} domain.SuccessResponse "Vote item cleared successfully"
 // @Failure 400 {object} domain.ErrorResponse "Bad Request"
 // @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_items [delete]
-// DELETE /api/v1/vote_items: Clear all vote items
+// @Router /vote_items [delete]
+// DELETE /vote_items: Clear all vote items
 func (h *VoteItemsHandler) ClearVoteItem(c *gin.Context) {
 	err := h.VoteItemUseCase.ClearVoteItem(c.Request.Context())
 	if err != nil {
@@ -290,116 +196,4 @@ func (h *VoteItemsHandler) ClearVoteItem(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "success"})
-}
-
-// @Summary Cast a vote
-// @Description Cast a vote
-// @Tags vote
-// @Accept  json
-// @Produce  json
-// @Param vote body domain.Vote true "Vote payload"
-// @Success 201 {object} domain.Vote "Vote successfully cast"
-// @Failure 400 {object} domain.ErrorResponse "Bad Request"
-// @Failure 401 {object} domain.ErrorResponse "Unauthorized"
-// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/votes [post]
-// POST /api/v1/votes: Cast a vote
-func (h *VoteItemsHandler) CastVote(c *gin.Context) {
-	var vote domain.Vote
-	if err := c.ShouldBindJSON(&vote); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": apperror.NewBadRequest(err.Error())})
-		return
-	}
-
-	user, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
-		return
-	}
-	vote.UserID = user.(*domain.User).UID
-
-	err := h.VoteUseCase.Create(c.Request.Context(), &vote)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, vote)
-}
-
-// @Summary Get vote results by session id
-// @Description Get vote results by session id. Can also return results in CSV format.
-// @Tags vote_results
-// @Accept  json
-// @Produce  json
-// @Produce  text/csv
-// @Param session_id path int true "Session ID"
-// @Param format query string false "Format of the response (json or csv)"
-// @Success 200 {array} domain.VoteResult "Vote results successfully retrieved"
-// @Failure 400 {object} domain.ErrorResponse "Bad Request"
-// @Failure 500 {object} domain.ErrorResponse "Internal Server Error"
-// @Router /api/v1/vote_results/{session_id} [get]
-// GET /api/v1/vote_results/{session_id}: Get vote results by session id
-// GET /api/v1/vote_results/{session_id}?format=csv: Get vote results by session id in CSV format
-func (h *VoteItemsHandler) GetVoteResultsBySession(c *gin.Context) {
-	sessionIDStr := c.Param("session_id")
-	sessionID, err := strconv.ParseUint(sessionIDStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session ID"})
-		return
-	}
-
-	voteResults, err := h.VoteUseCase.GetVoteResultsBySession(uint(sessionID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	format := c.DefaultQuery("format", "json")
-	if format == "csv" {
-		// Create a CSV writer writing to the HTTP response
-		c.Writer.Header().Set("Content-Type", "text/csv")
-		c.Writer.Header().Set("Content-Disposition", "attachment;filename=vote_results.csv")
-		buf := &bytes.Buffer{}
-		writer := csv.NewWriter(buf)
-
-		// Write the header
-		err = writer.Write([]string{"ID", "Description", "Name", "VoteCount", "SessionID", "IsActive"})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		// Write the data
-		for _, voteItem := range voteResults {
-			record := []string{
-				voteItem.VoteItemID.String(),
-				voteItem.VoteItemName,
-				strconv.Itoa(int(voteItem.VoteCount)),
-			}
-			err = writer.Write(record)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-		}
-
-		writer.Flush()
-		if err = writer.Error(); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write CSV data"})
-			return
-		}
-
-		// Set the necessary headers to instruct the browser to download the file
-		c.Header("Content-Description", "File Transfer")
-		c.Header("Content-Transfer-Encoding", "binary")
-		c.Header("Content-Disposition", "attachment; filename=vote_results.csv")
-		c.Header("Content-Type", "application/octet-stream")
-
-		// Write the buffer contents to the response
-		c.String(http.StatusOK, buf.String())
-
-	} else {
-		c.JSON(http.StatusOK, voteResults)
-	}
 }

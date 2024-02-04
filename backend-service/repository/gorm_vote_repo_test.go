@@ -1,16 +1,18 @@
 package repository
 
 import (
+	"context"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	"github.com/krittawatcode/vote-items/backend-service/domain"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func TestGormVoteRepository(t *testing.T) {
+func TestGormVoteRepository_Create(t *testing.T) {
 	mockDb, mock, _ := sqlmock.New()
 	dialector := postgres.New(postgres.Config{
 		Conn:       mockDb,
@@ -19,22 +21,41 @@ func TestGormVoteRepository(t *testing.T) {
 	db, _ := gorm.Open(dialector, &gorm.Config{})
 	repo := NewGormVoteRepository(db)
 
-	t.Run("GetVoteResultsBySession", func(t *testing.T) {
-		sessionID := uint(1)
+	userId := uuid.New()
+	itemId := uuid.New()
 
-		rows := sqlmock.NewRows([]string{"vote_item_id", "vote_item_name", "vote_count"}).
-			AddRow(uuid.New(), "Item 1", 10).
-			AddRow(uuid.New(), "Item 2", 5)
+	t.Run("No open vote session", func(t *testing.T) {
+		vote := &domain.Vote{
+			UserID:     userId,
+			VoteItemID: itemId,
+		}
 
-		mock.ExpectQuery("SELECT").WithArgs(sessionID).WillReturnRows(rows)
+		// Mock the vote session query
+		mock.ExpectQuery("SELECT").WillReturnError(gorm.ErrRecordNotFound)
 
-		results, err := repo.GetVoteResultsBySession(sessionID)
+		err := repo.Create(context.Background(), vote)
 
-		assert.NoError(t, err)
-		assert.Len(t, results, 2)
-		assert.Equal(t, "Item 1", results[0].VoteItemName)
-		assert.Equal(t, uint(10), results[0].VoteCount)
-		assert.Equal(t, "Item 2", results[1].VoteItemName)
-		assert.Equal(t, uint(5), results[1].VoteCount)
+		assert.Error(t, err)
+	})
+
+	t.Run("User has already voted", func(t *testing.T) {
+		vote := &domain.Vote{
+			UserID:     userId,
+			VoteItemID: itemId,
+		}
+
+		// Mock the vote session query
+		mock.ExpectQuery("SELECT").WillReturnRows(
+			sqlmock.NewRows([]string{"id", "is_open"}).AddRow(1, true),
+		)
+
+		// Mock the existing vote query
+		mock.ExpectQuery("SELECT").WillReturnRows(
+			sqlmock.NewRows([]string{"id", "user_id", "session_id", "vote_item_id"}).AddRow(1, vote.UserID, 1, vote.VoteItemID),
+		)
+
+		err := repo.Create(context.Background(), vote)
+
+		assert.Error(t, err)
 	})
 }

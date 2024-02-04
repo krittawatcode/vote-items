@@ -23,7 +23,3 @@ func (u *voteUsecase) Create(ctx context.Context, v *domain.Vote) error {
 	}
 	return nil
 }
-
-func (u *voteUsecase) GetVoteResultsBySession(sessionID uint) ([]domain.VoteResult, error) {
-	return u.voteRepo.GetVoteResultsBySession(sessionID)
-}

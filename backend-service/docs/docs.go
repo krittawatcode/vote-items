@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/users/me": {
+        "/users/me": {
             "get": {
                 "description": "Get details of the current user",
                 "consumes": [
@@ -50,7 +50,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/users/signIn": {
+        "/users/signIn": {
             "post": {
                 "description": "Sign in an existing user with email and password",
                 "consumes": [
@@ -111,7 +111,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/users/signUp": {
+        "/users/signUp": {
             "post": {
                 "description": "Sign up a new user with email and password",
                 "consumes": [
@@ -172,7 +172,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/vote_items": {
+        "/vote_items": {
             "get": {
                 "description": "Retrieve all active vote items",
                 "produces": [
@@ -278,7 +278,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/vote_items/{id}": {
+        "/vote_items/{id}": {
             "put": {
                 "description": "Update a vote item by ID",
                 "consumes": [
@@ -373,7 +373,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/vote_results/{session_id}": {
+        "/vote_results/{session_id}": {
             "get": {
                 "description": "Get vote results by session id. Can also return results in CSV format.",
                 "consumes": [
@@ -427,7 +427,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/vote_sessions/:id/open": {
+        "/vote_sessions/:id/open": {
             "put": {
                 "description": "Open a vote session by ID",
                 "consumes": [
@@ -471,7 +471,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/vote_sessions/open": {
+        "/vote_sessions/open": {
             "get": {
                 "description": "Retrieve the currently open vote session",
                 "produces": [
@@ -497,7 +497,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/vote_sessions/{id}/close": {
+        "/vote_sessions/{id}/close": {
             "put": {
                 "description": "Close a vote session by ID",
                 "consumes": [
@@ -541,7 +541,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/votes": {
+        "/votes": {
             "post": {
                 "description": "Cast a vote",
                 "consumes": [
