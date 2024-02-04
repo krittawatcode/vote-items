@@ -15,26 +15,22 @@ import (
 
 // Handler struct holds required services for handler to function
 type VoteItemsHandler struct {
-	Router             *gin.Engine
-	VoteItemUseCase    domain.VoteItemUseCase
-	VoteSessionUseCase domain.VoteSessionUseCase
-	VoteUseCase        domain.VoteUseCase
-	TokenUseCase       domain.TokenUseCase
-	BaseUrl            string // base url for user routes
-	TimeoutDuration    time.Duration
+	Router          *gin.Engine
+	VoteItemUseCase domain.VoteItemUseCase
+	TokenUseCase    domain.TokenUseCase
+	BaseUrl         string // base url for user routes
+	TimeoutDuration time.Duration
 }
 
 // Does not return as it deals directly with a reference to the gin Engine
-func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, vu domain.VoteUseCase, vsu domain.VoteSessionUseCase, tu domain.TokenUseCase, baseUrl string, timeout time.Duration) {
+func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, tu domain.TokenUseCase, url string, timeout time.Duration) {
 	h := &VoteItemsHandler{
-		VoteItemUseCase:    viu,
-		VoteSessionUseCase: vsu,
-		VoteUseCase:        vu,
-		TokenUseCase:       tu,
+		VoteItemUseCase: viu,
+		TokenUseCase:    tu,
 	}
 
 	// Create an vote-items group
-	g := router.Group(baseUrl)
+	g := router.Group(url)
 
 	if gin.Mode() != gin.TestMode {
 		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
@@ -44,15 +40,15 @@ func NewVoteItemsHandler(router *gin.Engine, viu domain.VoteItemUseCase, vu doma
 		// set up middle ware for time out
 		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
 		// get all active vote items
-		g.GET("/vote_items", middleware.AuthUser(h.TokenUseCase), h.FetchActiveVoteItems)
+		g.GET("/", middleware.AuthUser(h.TokenUseCase), h.FetchActiveVoteItems)
 		// create a new vote item
-		g.POST("/vote_items", middleware.AuthUser(h.TokenUseCase), h.CreateVoteItem)
+		g.POST("/", middleware.AuthUser(h.TokenUseCase), h.CreateVoteItem)
 		// update a vote item
-		g.PUT("/vote_items/:id", middleware.AuthUser(h.TokenUseCase), h.UpdateVoteItem)
+		g.PUT("/:id", middleware.AuthUser(h.TokenUseCase), h.UpdateVoteItem)
 		// delete a vote item
-		g.DELETE("/vote_items/:id", middleware.AuthUser(h.TokenUseCase), h.DeleteVoteItem)
+		g.DELETE("/:id", middleware.AuthUser(h.TokenUseCase), h.DeleteVoteItem)
 		// clear all vote items
-		g.DELETE("/vote_items", middleware.AuthUser(h.TokenUseCase), h.ClearVoteItem)
+		g.DELETE("/", middleware.AuthUser(h.TokenUseCase), h.ClearVoteItem)
 	}
 }
 

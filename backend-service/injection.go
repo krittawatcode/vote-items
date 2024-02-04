@@ -102,9 +102,9 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	// read in API_URL
 	baseURL := os.Getenv("API_URL")
 	userPath := os.Getenv("USER_PATH")
-	votePath := os.Getenv("VOTE_PATH")
-	voteItemPath := os.Getenv("VOTE_ITEM_PATH")
 	voteSessionPath := os.Getenv("VOTE_SESSION_PATH")
+	voteItemPath := os.Getenv("VOTE_ITEM_PATH")
+	votePath := os.Getenv("VOTE_PATH")
 	voteResultPath := os.Getenv("VOTE_RESULT_PATH")
 
 	// read in HANDLER_TIMEOUT
@@ -119,9 +119,9 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	 * setup handler
 	 */
 	handler.NewUserHandler(router, userUseCase, tokenUseCase, baseURL+userPath, timeout)
-	handler.NewVoteItemsHandler(router, voteItemUseCase, voteUseCase, voteSessionUseCase, tokenUseCase, baseURL+voteItemPath, timeout)
-	handler.NewVotesHandler(router, voteUseCase, tokenUseCase, baseURL+votePath, timeout)
 	handler.NewVoteSessionsHandler(router, voteSessionUseCase, tokenUseCase, baseURL+voteSessionPath, timeout)
+	handler.NewVoteItemsHandler(router, voteItemUseCase, tokenUseCase, baseURL+voteItemPath, timeout)
+	handler.NewVotesHandler(router, voteUseCase, tokenUseCase, baseURL+votePath, timeout)
 	handler.NewVoteResultsHandler(router, voteResultUseCase, tokenUseCase, baseURL+voteResultPath, timeout)
 
 	// set up swagger

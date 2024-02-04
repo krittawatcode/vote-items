@@ -38,11 +38,11 @@ func NewVoteSessionsHandler(router *gin.Engine, vsu domain.VoteSessionUseCase, t
 		// set up middle ware for time out
 		g.Use(middleware.Timeout(timeout, apperror.NewServiceUnavailable()))
 		// get current open vote session
-		g.GET("/vote_sessions/open", middleware.AuthUser(h.TokenUseCase), h.GetOpenVoteSession)
+		g.GET("/open", middleware.AuthUser(h.TokenUseCase), h.GetOpenVoteSession)
 		// create a new vote session
-		g.PUT("/vote_sessions/:id/open", middleware.AuthUser(h.TokenUseCase), h.OpenVoteSession)
+		g.PUT("/:id/open", middleware.AuthUser(h.TokenUseCase), h.OpenVoteSession)
 		// close a vote session
-		g.PUT("/vote_sessions/:id/close", middleware.AuthUser(h.TokenUseCase), h.CloseVoteSession)
+		g.PUT("/:id/close", middleware.AuthUser(h.TokenUseCase), h.CloseVoteSession)
 	}
 }
 
