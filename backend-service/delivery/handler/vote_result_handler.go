@@ -42,7 +42,7 @@ func NewVoteResultsHandler(router *gin.Engine, vru domain.VoteResultUseCase, tu 
 		// get vote results by session id
 		// GET /api/v1/vote_results/{session_id}: Get vote results by session id
 		// GET /api/v1/vote_results/{session_id}?format=csv: Get vote results by session id in CSV format
-		g.GET("/:id/result", middleware.AuthUser(h.TokenUseCase), h.GetVoteResultsBySession)
+		g.GET("/:session_id", middleware.AuthUser(h.TokenUseCase), h.GetVoteResultsBySession)
 
 	}
 }
