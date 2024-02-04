@@ -36,6 +36,7 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	voteSessionRepository := repository.NewGormVoteSessionRepository(d.DB)
 	voteItemRepository := repository.NewGormVoteItemRepository(d.DB)
 	voteRepository := repository.NewGormVoteRepository(d.DB)
+	voteResultRepository := repository.NewGormVoteResultRepository(d.DB)
 	/*
 	 * usecase layer
 	 */
@@ -43,7 +44,7 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	voteSessionUseCase := usecase.NewVoteSessionUsecase(voteSessionRepository)
 	voteItemUseCase := usecase.NewVoteItemUsecase(voteItemRepository)
 	voteUseCase := usecase.NewVoteUsecase(voteRepository)
-
+	voteResultUseCase := usecase.NewVoteResultUsecase(voteResultRepository)
 	// load rsa keys
 	privKeyFile := os.Getenv("PRIV_KEY_FILE")
 	priv, err := os.ReadFile(privKeyFile)
@@ -101,6 +102,10 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	// read in API_URL
 	baseURL := os.Getenv("API_URL")
 	userPath := os.Getenv("USER_PATH")
+	votePath := os.Getenv("VOTE_PATH")
+	voteItemPath := os.Getenv("VOTE_ITEM_PATH")
+	voteSessionPath := os.Getenv("VOTE_SESSION_PATH")
+	voteResultPath := os.Getenv("VOTE_RESULT_PATH")
 
 	// read in HANDLER_TIMEOUT
 	handlerTimeout := os.Getenv("HANDLER_TIMEOUT")
@@ -108,12 +113,16 @@ func inject(d *database.GormDataSources, r *database.RedisDataSources) (*gin.Eng
 	if err != nil {
 		return nil, fmt.Errorf("could not parse HANDLER_TIMEOUT as int: %w", err)
 	}
+	timeout := time.Duration(time.Duration(ht) * time.Second)
 
-	handler.NewUserHandler(router, userUseCase, tokenUseCase, baseURL+userPath, time.Duration(time.Duration(ht)*time.Second))
 	/*
-	 * setup vote item handler
+	 * setup handler
 	 */
-	handler.NewVoteItemsHandler(router, voteItemUseCase, voteUseCase, voteSessionUseCase, tokenUseCase, baseURL, time.Duration(time.Duration(ht)*time.Second))
+	handler.NewUserHandler(router, userUseCase, tokenUseCase, baseURL+userPath, timeout)
+	handler.NewVoteItemsHandler(router, voteItemUseCase, voteUseCase, voteSessionUseCase, tokenUseCase, baseURL+voteItemPath, timeout)
+	handler.NewVotesHandler(router, voteUseCase, tokenUseCase, baseURL+votePath, timeout)
+	handler.NewVoteSessionsHandler(router, voteSessionUseCase, tokenUseCase, baseURL+voteSessionPath, timeout)
+	handler.NewVoteResultsHandler(router, voteResultUseCase, tokenUseCase, baseURL+voteResultPath, timeout)
 
 	// set up swagger
 	docs.SwaggerInfo.BasePath = baseURL
